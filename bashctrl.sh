@@ -48,12 +48,23 @@ default-definitions()
     }
     export -f prev_cmd_failed
 
+    # old framework:
     : ${starting_dependents:=default_header2}
     : ${starting_checks:=default_header2}
     : ${skip_rest_if_already_done:=default_skip_step} # exit (sub)process if return code is 0
     export starting_dependents
     export starting_checks
     export skip_rest_if_already_done
+
+    # new framework:
+    : ${starting_step:=default_header2}
+    : ${starting_group:=default_set_title} # TODO:
+    : ${skip_step_if_already_done:=default_skip_step}
+    : ${skip_group_if_unnecessary:=default_skip_group}
+    export starting_step
+    export starting_group
+    export skip_step_if_already_done
+    export skip_group_if_unnecessary
 
     export BASHCTRL_DEPTH=0
     export PREV_SHLVL="$SHLVL"
@@ -82,6 +93,19 @@ default-definitions()
 	fi
     }
     export -f default_skip_step
+
+    default_skip_group()
+    {
+	if (($? == 0)); then
+	    echo "** Skipping group: $step_title"
+	    step_title=""
+	    exit 0
+	else
+	    echo ; echo "** DOING GROUP: $step_title"
+	    step_title=""
+	fi
+    }
+    export -f default_skip_group
 
     finished_step=prev_cmd_failed
 }
@@ -125,6 +149,7 @@ dump-definitions()
 status-definitions()
 {
     skip_rest_if_already_done=status_skip_step
+    skip_step_if_already_done=status_skip_step
 
     status_skip_step()
     {
