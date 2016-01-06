@@ -3,10 +3,18 @@
 #   $starting_dependents, $starting_checks, and
 #   $skip_rest_if_already_done.
 
+# It also exports this new framework which will hopefully
+# soon replace some of the above:
+#   $starting_step
+#   $skip_step_if_already_done
+#   $starting_group
+#   $skip_group_if_unnecessary
+
 # For any of these that are already defined, no change is made but the
 # item is still exported.  Therefore, simple subscripts steps that are
 # not written to be called independently can assume these are already
-# defined.
+# defined.  (Steps that are written to be called independently will
+# need to source this or some other file that defines the above exports.)
 
 # In addition, it always sets CODEDIR, because this script should
 # only be sourced by scripts that can be called independently, and
@@ -54,27 +62,28 @@ cd -P /proc/self
 ##     not change any state.
 ## (3) The return code of the last "check" command is used to decide whether
 ##     the rest of the step (i.e. the step's process) needs to be done.
-##     This should be done by inserting "$skip_rest_if_already_done" at
+##     This should be done by inserting "$skip_step_if_already_done" at
 ##     that point in the step.
-##     ((TODO: update the doc))
 ## (4) An optional '$starting_step "Description of the step"' can appear
 ##     at the start of the step.
+## (5) Processes are also used to group steps into hierarchies.
+##     ((TODO: update the doc))
 
 ##  Therefore, with minimal effort, it should be possible to take a
 ##  the simplest easy-to-read sequential script and make it (at least
 ##  somewhat) idempotent.  In other words, it should be possible to
 ##  run the script multiple times, and have it gracefully recover from
-##  failures.
+##  failures and be able to retry efficiently after the point of failure.
 
-##  $starting_step and $skip_rest_if_already_done are simple bash variables
+##  $starting_step and $skip_step_if_already_done are simple bash variables
 ##  and can serve as hooks for controlling the script in useful ways.
 ##  The setting below provide simple defaults that provide some log output
 ##  and some idempotent behavior.
 
 ##  The action of $starting_step as defined below is to only remember the title.
-##  It will be used by $skip_rest_if_already_done.
+##  It will be used by $skip_step_if_already_done.
 
-## The action of $skip_rest_if_already_done as defined below is to exit
+## The action of $skip_step_if_already_done as defined below is to exit
 ## the process if the return code is 0.  In addition it outputs a
 ## header line that reports the step's title and whether it is being
 ## done or skipped.
@@ -95,6 +104,16 @@ export starting_dependents
 export starting_checks
 export skip_rest_if_already_done
 
+# the new framework:
+: ${starting_step:=default_set_title}
+: ${starting_group:=default_set_title}
+: ${skip_step_if_already_done:=default_skip_step}
+: ${skip_group_if_unnecessary:=default_skip_group}
+export starting_step
+export starting_group
+export skip_step_if_already_done
+export skip_group_if_unnecessary
+
 default_set_title()
 {
     [ "$*" != "" ] && step_title="$*"
@@ -113,3 +132,16 @@ default_skip_step()
     fi
 }
 export -f default_skip_step
+
+default_skip_group()
+{
+    if (($? == 0)); then
+	echo "** Skipping group: $step_title"
+	step_title=""
+	exit 0
+    else
+	echo ; echo "** DOING GROUP: $step_title"
+	step_title=""
+    fi
+}
+export -f default_skip_group
