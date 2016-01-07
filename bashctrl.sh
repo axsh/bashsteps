@@ -112,14 +112,15 @@ default-definitions()
 
 dump1-definitions()
 {
-    starting_dependents=dump1_header
-    starting_checks=dump1_header
-    skip_rest_if_already_done='exit 0'
-    export starting_dependents
-    export starting_checks
-    export skip_rest_if_already_done
+    starting_step=dump1_header
+    starting_group=dump1_header
+    skip_step_if_already_done='exit 0'
+    skip_group_if_already_done=':'
+    export starting_step
+    export starting_group
+    export skip_step_if_already_done
+    export skip_group_if_already_done
 
-    export BASH_SUBSHELL_BASE=$BASH_SUBSHELL
     dump1_header()
     {
 	[ "$*" = "" ] && return 0
@@ -221,7 +222,7 @@ parse-parameters()
 	    in-order | debug)
 		choosecmd "$1"
 		default-definitions
-		echo "* An in-order list of steps"
+		echo "* An in-order list of steps with bash nesting info.  No attempt to show hierarchy:"
 		dump1-definitions
 		;;
 	    dump)
