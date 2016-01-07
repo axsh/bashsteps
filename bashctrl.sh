@@ -20,7 +20,7 @@ default-definitions()
     export -f prev_cmd_failed
 
     : ${starting_step:=default_header2}
-    : ${starting_group:=default_set_title} # TODO:
+    : ${starting_group:=default_group_header} # TODO:
     : ${skip_step_if_already_done:=default_skip_step}
     : ${skip_group_if_unnecessary:=default_skip_group}
     export starting_step
@@ -43,6 +43,17 @@ default-definitions()
     }
     export -f default_header2
 
+    default_group_header()
+    {
+	export group_title="$*"
+	(( BASHCTRL_DEPTH++ ))
+	for (( i = 0; i <= BASHCTRL_DEPTH; i++ )); do
+	    echo -n "*"
+	done
+	echo " : $group_title"
+    }
+    export -f default_group_header
+    
     default_skip_step()
     {
 	if (($? == 0)); then
