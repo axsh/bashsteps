@@ -22,7 +22,7 @@ default-definitions()
     : ${starting_step:=default_header2}
     : ${starting_group:=default_group_header} # TODO:
     : ${skip_step_if_already_done:=default_skip_step2}
-    : ${skip_group_if_unnecessary:=default_skip_group}
+    : ${skip_group_if_unnecessary:=default_skip_group2}
     export starting_step
     export starting_group
     export skip_step_if_already_done
@@ -69,18 +69,18 @@ default-definitions()
     }
     export -f default_skip_step2
 
-    default_skip_group()
+    default_skip_group2()
     {
 	if (($? == 0)); then
-	    echo "** Skipping group: $step_title"
+	    echo "      Skipping group: $group_title"
 	    group_title=""
 	    exit 0
 	else
-	    echo ; echo "** DOING GROUP: $step_title"
+	    echo ; echo "      DOING GROUP: $group_title"
 	    group_title=""
 	fi
     }
-    export -f default_skip_group
+    export -f default_skip_group2
 
     finished_step=prev_cmd_failed
 }
@@ -100,7 +100,7 @@ dump1-definitions()
     starting_step=dump1_header
     starting_group=dump1_header
     skip_step_if_already_done='exit 0'
-    skip_group_if_already_done=':'
+    skip_group_if_unnecessary=':'
     export starting_step
     export starting_group
     export skip_step_if_already_done
@@ -120,16 +120,19 @@ status-definitions()
     skip_rest_if_already_done=status_skip_step
     skip_step_if_already_done=status_skip_step
 
+    export skip_whole_tree=''
+    skip_group_if_unnecessary='eval (( $? == 0 )) && skip_whole_tree=,skippable'
+    
     status_skip_step()
     {
 	rc="$?"
 	outline_header_at_depth "$BASHCTRL_DEPTH"
 	echo -n "$step_title"
 	if (($rc == 0)); then
-	    echo " (DONE)"
+	    echo " (DONE$skip_whole_tree)"
 	    step_title=""
 	else
-	    echo " (not done)"
+	    echo " (not done$skip_whole_tree)"
 	    step_title=""
 	fi
 	exit 0 # Always, because we are just checking status
@@ -166,6 +169,7 @@ do1-definitions()
 {
     skip_step_if_already_done=do1_skip_step
     starting_group=':'
+    skip_group_if_unnecessary=':'
 
     do1_skip_step()
     {
