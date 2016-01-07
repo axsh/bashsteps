@@ -164,9 +164,9 @@ filter-definitions()
 
 do1-definitions()
 {
-    skip_rest_if_already_done=do1_skip_step
+    skip_step_if_already_done=do1_skip_step
+    starting_group=':'
 
-    export BASH_SUBSHELL_BASE=$BASH_SUBSHELL
     do1_skip_step()
     {
 	if (($? == 0)); then
