@@ -92,23 +92,6 @@ dump1-definitions()
     export -f dump1_header
 }
 
-dump-definitions()
-{
-    starting_checks=dump1_header
-    skip_rest_if_already_done='exit 0'
-
-    export BASH_SUBSHELL_BASE=$BASH_SUBSHELL
-    dump1_header()
-    {
-	step_title="$*"
-	for (( i = BASH_SUBSHELL_BASE; i <= BASH_SUBSHELL; i++ )); do
-	    echo -n "*"
-	done
-	echo " : $step_title"
-    }
-    export -f dump1_header
-}
-
 status-definitions()
 {
     skip_rest_if_already_done=status_skip_step
@@ -186,13 +169,6 @@ parse-parameters()
 		default-definitions
 		echo "* An in-order list of steps with bash nesting info.  No attempt to show hierarchy:"
 		dump1-definitions
-		;;
-	    dump)
-		choosecmd "$1"
-		default-definitions
-		dump-definitions
-		echo "* Step dependency hierarchy with no pruning"
-		usetac=true
 		;;
 	    status-all | status)
 		choosecmd "$1"
