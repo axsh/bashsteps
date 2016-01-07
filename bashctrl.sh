@@ -73,11 +73,11 @@ default-definitions()
     {
 	if (($? == 0)); then
 	    echo "** Skipping group: $step_title"
-	    step_title=""
+	    group_title=""
 	    exit 0
 	else
 	    echo ; echo "** DOING GROUP: $step_title"
-	    step_title=""
+	    group_title=""
 	fi
     }
     export -f default_skip_group
@@ -139,10 +139,9 @@ status-definitions()
 
 filter-definitions()
 {
-    starting_checks=filter_header
-
-    export BASH_SUBSHELL_BASE=$BASH_SUBSHELL
-    filter_header()
+    starting_step=filter_header_step
+    starting_group=':'
+    filter_header_step()
     {
 	step_title="$*"
 	if [[ "$step_title" != $title_glob ]]; then
@@ -150,7 +149,17 @@ filter-definitions()
 	    exit 0
 	fi
     }
-    export -f filter_header
+    export -f filter_header_step
+
+    filter_header_group()
+    {
+	group_title="$*"
+	if [[ "$group_title" != $title_glob ]]; then
+	    group_title=""
+	    exit 0
+	fi
+    }
+    export -f filter_header_group
 }
 
 do1-definitions()
