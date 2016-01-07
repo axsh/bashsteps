@@ -19,15 +19,6 @@ default-definitions()
     }
     export -f prev_cmd_failed
 
-    # old framework:
-    : ${starting_dependents:=default_header2}
-    : ${starting_checks:=default_header2}
-    : ${skip_rest_if_already_done:=default_skip_step} # exit (sub)process if return code is 0
-    export starting_dependents
-    export starting_checks
-    export skip_rest_if_already_done
-
-    # new framework:
     : ${starting_step:=default_header2}
     : ${starting_group:=default_set_title} # TODO:
     : ${skip_step_if_already_done:=default_skip_step}
