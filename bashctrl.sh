@@ -7,35 +7,6 @@ reportfailed()
 }
 export -f reportfailed
 
-# The script called by this should have the following pattern:
-
-# reused-dependent()
-# {
-#    (
-#       ......
-#    ) ; $finished_step
-# }
-
-#  (
-     ## sequential dependent
-#  ) ; $finished_step
-
-#  reused-sequential-dependent
-
-#  (
-#      reset() { reset code; }
-#      (
-          ## nexted dependant
-#      ) ; $finished_step
-#      reused-nested-dependant
-#      $starting_checks "step name"
-#      script-to-check-if-done
-#      $skip_rest_if_already_done; set -e
-#      script-to-do-the-step
-#  ) ; $finished_step
-
-# simple but ugly
-
 default-definitions()
 {
     prev_cmd_failed()
