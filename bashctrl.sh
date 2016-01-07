@@ -21,51 +21,53 @@ default-definitions()
 
     : ${starting_step:=default_header2}
     : ${starting_group:=default_group_header} # TODO:
-    : ${skip_step_if_already_done:=default_skip_step}
+    : ${skip_step_if_already_done:=default_skip_step2}
     : ${skip_group_if_unnecessary:=default_skip_group}
     export starting_step
     export starting_group
     export skip_step_if_already_done
     export skip_group_if_unnecessary
 
-    export BASHCTRL_DEPTH=0
+    export BASHCTRL_DEPTH=1
     export PREV_SHLVL="$SHLVL"
     export PREV_BASH_SUBSHELL="$BASH_SUBSHELL"
     default_header2()
     {
 	[ "$*" = "" ] && return 0
 	step_title="$*"
-	if [ "$PREV_SHLVL" != "$SHLVL" ] || [ "$PREV_BASH_SUBSHELL" != "$BASH_SUBSHELL" ]; then
-	    (( BASHCTRL_DEPTH++ ))
-	    export PREV_SHLVL="$SHLVL"
-	    export PREV_BASH_SUBSHELL="$BASH_SUBSHELL"
-	fi
+	# Maybe with groups this hack is not needed anymore:
+#	if [ "$PREV_SHLVL" != "$SHLVL" ] || [ "$PREV_BASH_SUBSHELL" != "$BASH_SUBSHELL" ]; then
+#	    (( BASHCTRL_DEPTH++ ))
+#	    export PREV_SHLVL="$SHLVL"
+#	    export PREV_BASH_SUBSHELL="$BASH_SUBSHELL"
+#	fi
     }
     export -f default_header2
 
     default_group_header()
     {
 	export group_title="$*"
+	outline_header_at_depth "$BASHCTRL_DEPTH"
 	(( BASHCTRL_DEPTH++ ))
-	for (( i = 0; i <= BASHCTRL_DEPTH; i++ )); do
-	    echo -n "*"
-	done
-	echo " : $group_title"
+	echo "$group_title"
     }
     export -f default_group_header
     
-    default_skip_step()
+    default_skip_step2()
     {
 	if (($? == 0)); then
-	    echo "** Skipping step: $step_title"
+	    outline_header_at_depth "$BASHCTRL_DEPTH"
+	    echo "Skipping step: $step_title"
 	    step_title=""
 	    exit 0
 	else
-	    echo ; echo "** DOING STEP: $step_title"
+	    echo
+	    outline_header_at_depth "$BASHCTRL_DEPTH"
+	    echo "DOING STEP: $step_title"
 	    step_title=""
 	fi
     }
-    export -f default_skip_step
+    export -f default_skip_step2
 
     default_skip_group()
     {
@@ -82,6 +84,16 @@ default-definitions()
 
     finished_step=prev_cmd_failed
 }
+
+outline_header_at_depth()
+{
+    depth="$1"
+    for (( i = 0; i <= depth; i++ )); do
+	echo -n "*"
+    done
+    echo -n " : "
+}
+export -f outline_header_at_depth
 
 dump1-definitions()
 {
@@ -111,10 +123,8 @@ status-definitions()
     status_skip_step()
     {
 	rc="$?"
-	for (( i = 0; i <= BASHCTRL_DEPTH; i++ )); do
-	    echo -n "*"
-	done
-	echo -n " : $step_title"
+	outline_header_at_depth "$BASHCTRL_DEPTH"
+	echo -n "$step_title"
 	if (($rc == 0)); then
 	    echo " (DONE)"
 	    step_title=""
@@ -186,7 +196,6 @@ parse-parameters()
 		default-definitions
 		status-definitions
 		echo "* Status of all steps in dependency hierarchy with no pruning"
-		usetac=true
 		;;
 	    status1)
 		choosecmd "$1"
