@@ -20,7 +20,7 @@ default-definitions()
     export -f prev_cmd_failed
 
     : ${starting_step:=default_header2}
-    : ${starting_group:=default_group_header} # TODO:
+    : ${starting_group:=default_group_header}
     : ${skip_step_if_already_done:=default_skip_step2}
     : ${skip_group_if_unnecessary:=default_skip_group2}
     export starting_step
@@ -29,18 +29,10 @@ default-definitions()
     export skip_group_if_unnecessary
 
     export BASHCTRL_DEPTH=1
-    export PREV_SHLVL="$SHLVL"
-    export PREV_BASH_SUBSHELL="$BASH_SUBSHELL"
     default_header2()
     {
 	[ "$*" = "" ] && return 0
 	step_title="$*"
-	# Maybe with groups this hack is not needed anymore:
-#	if [ "$PREV_SHLVL" != "$SHLVL" ] || [ "$PREV_BASH_SUBSHELL" != "$BASH_SUBSHELL" ]; then
-#	    (( BASHCTRL_DEPTH++ ))
-#	    export PREV_SHLVL="$SHLVL"
-#	    export PREV_BASH_SUBSHELL="$BASH_SUBSHELL"
-#	fi
     }
     export -f default_header2
 
