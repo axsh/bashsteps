@@ -50,18 +50,29 @@ null-definitions()
 
 default-definitions()
 {
-    : ${starting_step:=default_header2}
-    : ${starting_group:=default_group_header}
+    : ${starting_step:=just_remember_step_title}
     : ${skip_step_if_already_done:=default_skip_step2}
+
+    : ${starting_group:=default_group_header}
     : ${skip_group_if_unnecessary:=default_skip_group2}
 
     export BASHCTRL_DEPTH=1
-    default_header2()
+    just_remember_step_title()
     {
+	# This hook appears at the start of a step, so defining the
+	# step title here make the title appear at the start of the
+	# step in the source code.  However, during execution it is
+	# desirable to display other information that is not available
+	# yet along with the title.  Therefore this step only
+	# remembers the title in a variable.  It can assume that the
+	# hook for $skip_step_if_already_done will output the title,
+	# because that hook is required and all code between this hook
+	# and the "skip_step" hook must execute without side effects
+	# or terminating errors.
 	[ "$*" = "" ] && return 0
 	step_title="$*"
     }
-    export -f default_header2
+    export -f just_remember_step_title
 
     default_group_header()
     {
