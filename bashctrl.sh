@@ -51,7 +51,7 @@ null-definitions()
 default-definitions()
 {
     : ${starting_step:=just_remember_step_title}
-    : ${skip_step_if_already_done:=default_skip_step2}
+    : ${skip_step_if_already_done:=output_title_and_skipinfo_at_outline_depth}
 
     : ${starting_group:=default_group_header}
     : ${skip_group_if_unnecessary:=default_skip_group2}
@@ -74,6 +74,29 @@ default-definitions()
     }
     export -f just_remember_step_title
 
+    output_title_and_skipinfo_at_outline_depth()
+    {
+	# This hook implements the step skipping functionality plus
+	# adds minimal output.  It reads the error code from the
+	# checking code and if it shows success (rc==0), then it
+	# assumes that the step has already been done and that it can
+	# be skipped.  It assumes $step_title has already been set.
+	# TODO: put try to put in useful simple info when $step_title
+	# is not set.  It assumes $BASHCTRL_DEPTH is correct.
+	if (($? == 0)); then
+	    outline_header_at_depth "$BASHCTRL_DEPTH"
+	    echo "Skipping step: $step_title"
+	    step_title=""
+	    exit 0 # i.e. skip (without error) to end of process/step
+	else
+	    echo
+	    outline_header_at_depth "$BASHCTRL_DEPTH"
+	    echo "DOING STEP: $step_title"
+	    step_title=""
+	fi
+    }
+    export -f output_title_and_skipinfo_at_outline_depth
+
     default_group_header()
     {
 	export group_title="$*"
@@ -83,22 +106,6 @@ default-definitions()
     }
     export -f default_group_header
     
-    default_skip_step2()
-    {
-	if (($? == 0)); then
-	    outline_header_at_depth "$BASHCTRL_DEPTH"
-	    echo "Skipping step: $step_title"
-	    step_title=""
-	    exit 0
-	else
-	    echo
-	    outline_header_at_depth "$BASHCTRL_DEPTH"
-	    echo "DOING STEP: $step_title"
-	    step_title=""
-	fi
-    }
-    export -f default_skip_step2
-
     default_skip_group2()
     {
 	if (($? == 0)); then
