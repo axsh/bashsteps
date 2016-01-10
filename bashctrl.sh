@@ -16,6 +16,20 @@ export starting_group
 export skip_step_if_already_done
 export skip_group_if_unnecessary
 
+helper-function-definitions()
+{
+    prev_cmd_failed()
+    {
+	# this is needed because '( cmd1 ; cmd2 ; set -e ; cmd3 ; cmd4 ) || reportfailed'
+	# does not work because the || disables set -e, even inside the subshell!
+	# see http://unix.stackexchange.com/questions/65532/why-does-set-e-not-work-inside
+	# A workaround is to do  '( cmd1 ; cmd2 ; set -e ; cmd3 ; cmd4 ) ; prev_cmd_failed'
+	(($? == 0)) || reportfailed "$*"
+    }
+    export -f prev_cmd_failed
+    exit_if_failed=prev_cmd_failed
+}
+    
 null-definitions()
 {
     # The simplest bashsteps hookpossible is ":", which just let
@@ -36,16 +50,6 @@ null-definitions()
 
 default-definitions()
 {
-    prev_cmd_failed()
-    {
-	# this is needed because '( cmd1 ; cmd2 ; set -e ; cmd3 ; cmd4 ) || reportfailed'
-	# does not work because the || disables set -e, even inside the subshell!
-	# see http://unix.stackexchange.com/questions/65532/why-does-set-e-not-work-inside
-	# A workaround is to do  '( cmd1 ; cmd2 ; set -e ; cmd3 ; cmd4 ) ; prev_cmd_failed'
-	(($? == 0)) || reportfailed "$*"
-    }
-    export -f prev_cmd_failed
-
     : ${starting_step:=default_header2}
     : ${starting_group:=default_group_header}
     : ${skip_step_if_already_done:=default_skip_step2}
@@ -219,12 +223,14 @@ parse-parameters()
 		;;
 	    in-order | debug)
 		choosecmd "$1"
+		helper-function-definitions
 		default-definitions
 		echo "* An in-order list of steps with bash nesting info.  No attempt to show hierarchy:"
 		dump1-definitions
 		;;
 	    status-all | status)
 		choosecmd "$1"
+		helper-function-definitions
 		default-definitions
 		status-definitions
 		echo "* Status of all steps in dependency hierarchy with no pruning"
@@ -232,17 +238,20 @@ parse-parameters()
 	    status1)
 		choosecmd "$1"
 		export title_glob="$2" ; shift
+		helper-function-definitions
 		default-definitions
 		status-definitions
 		filter-definitions
 		;;
 	    [d]o)
 		choosecmd "$1"
+		helper-function-definitions
 		default-definitions
 		;;
 	    [d]o1)
 		choosecmd "$1"
 		export title_glob="$2" ; shift
+		helper-function-definitions
 		default-definitions
 		do1-definitions
 		filter-definitions
