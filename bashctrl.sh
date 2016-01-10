@@ -7,6 +7,33 @@ reportfailed()
 }
 export -f reportfailed
 
+
+# The following variables are used to set bashsteps hooks, which are
+# used to control and debug bash scripts that use the bashsteps
+# framework:
+export starting_step
+export starting_group
+export skip_step_if_already_done
+export skip_group_if_unnecessary
+
+null-definitions()
+{
+    # The simplest bashsteps hookpossible is ":", which just let
+    # control passthru the hooks without any effect. ("" will not work
+    # because hooks can be invoked with parameter, and the null
+    # operation must ignore the parameters.)  In general, a script
+    # starting from a clean environment should run correctly with null
+    # definitions, because running the script will traverse all steps,
+    # and the steps should already be ordered so that steps that
+    # require preconditions are always run after steps that establish
+    # the same preconditions.
+    : ${starting_step:=":"}
+    : ${starting_group:=":"}
+    : ${skip_step_if_already_done:=":"}
+    : ${skip_group_if_unnecessary:=":"}
+}
+
+
 default-definitions()
 {
     prev_cmd_failed()
@@ -23,10 +50,6 @@ default-definitions()
     : ${starting_group:=default_group_header}
     : ${skip_step_if_already_done:=default_skip_step2}
     : ${skip_group_if_unnecessary:=default_skip_group2}
-    export starting_step
-    export starting_group
-    export skip_step_if_already_done
-    export skip_group_if_unnecessary
 
     export BASHCTRL_DEPTH=1
     default_header2()
@@ -190,6 +213,10 @@ parse-parameters()
 {
     while [ "$#" -gt 0 ]; do
 	case "$1" in
+	    nulldefs | passthru)
+		choosecmd "$1"
+		null-definitions
+		;;
 	    in-order | debug)
 		choosecmd "$1"
 		default-definitions
