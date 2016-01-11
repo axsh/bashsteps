@@ -53,7 +53,7 @@ default-definitions()
     : ${starting_step:=just_remember_step_title}
     : ${skip_step_if_already_done:=output_title_and_skipinfo_at_outline_depth}
 
-    : ${starting_group:=default_group_header}
+    : ${starting_group:=remember_and_output_group_title_in_outline}
     : ${skip_group_if_unnecessary:=default_skip_group2}
 
     export BASHCTRL_DEPTH=1
@@ -69,7 +69,6 @@ default-definitions()
 	# because that hook is required and all code between this hook
 	# and the "skip_step" hook must execute without side effects
 	# or terminating errors.
-	[ "$*" = "" ] && return 0
 	step_title="$*"
     }
     export -f just_remember_step_title
@@ -97,14 +96,21 @@ default-definitions()
     }
     export -f output_title_and_skipinfo_at_outline_depth
 
-    default_group_header()
+    remember_and_output_group_title_in_outline()
     {
+	# This hook outputs remembers the group title in a bash
+	# variable and outputs it immediately to the outline log.  The
+	# hook is required for groups, and the other group hooks are
+	# optional so here is the only (straightforward) place to do
+	# such output.  Also, since this hook is required for all
+	# groups, here is a reliable place to update the value of
+	# $BASHCTRL_DEPTH.
 	export group_title="$*"
 	outline_header_at_depth "$BASHCTRL_DEPTH"
 	(( BASHCTRL_DEPTH++ ))
 	echo "$group_title"
     }
-    export -f default_group_header
+    export -f remember_and_output_group_title_in_outline
     
     default_skip_group2()
     {
