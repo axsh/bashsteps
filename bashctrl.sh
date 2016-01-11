@@ -54,7 +54,7 @@ default-definitions()
     : ${skip_step_if_already_done:=output_title_and_skipinfo_at_outline_depth}
 
     : ${starting_group:=remember_and_output_group_title_in_outline}
-    : ${skip_group_if_unnecessary:=default_skip_group2}
+    : ${skip_group_if_unnecessary:=maybe_skip_group_and_output_if_skipping}
 
     export BASHCTRL_DEPTH=1
     just_remember_step_title()
@@ -112,8 +112,14 @@ default-definitions()
     }
     export -f remember_and_output_group_title_in_outline
     
-    default_skip_group2()
+    maybe_skip_group_and_output_if_skipping()
     {
+	# If the preceding bash statement returns success (rc==0),
+	# this hook skips the whole group, including the checks of any
+	# of the steps.  This makes sense when executing. (When
+	# running the script to collect as much status information as
+	# possible, it makes more sense to execute all the steps in
+	# the group.)
 	if (($? == 0)); then
 	    echo "      Skipping group: $group_title"
 	    group_title=""
@@ -123,7 +129,7 @@ default-definitions()
 	    group_title=""
 	fi
     }
-    export -f default_skip_group2
+    export -f maybe_skip_group_and_output_if_skipping
 
     finished_step=prev_cmd_failed
 }
