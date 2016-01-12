@@ -86,6 +86,7 @@ optimized-actions-with-terse-output-definitions()
 	# and the "skip_step" hook must execute without side effects
 	# or terminating errors.
 	step_title="$*"
+	$starting_step_extra_hook
     }
     export -f just_remember_step_title
 
@@ -99,14 +100,18 @@ optimized-actions-with-terse-output-definitions()
 	# TODO: try to put in useful simple info when $step_title
 	# is not set.  It assumes $BASHCTRL_DEPTH is correct.
 	if (($? == 0)); then
-	    outline_header_at_depth "$BASHCTRL_DEPTH"
+	    ( set +x
+	      outline_header_at_depth "$BASHCTRL_DEPTH"
+	    )
 	    echo "Skipping step: $step_title"
 	    step_title=""
 	    exit 0 # i.e. skip (without error) to end of process/step
 	else
-	    echo
-	    outline_header_at_depth "$BASHCTRL_DEPTH"
-	    echo "DOING STEP: $step_title"
+	    ( set +x
+	      echo
+	      outline_header_at_depth "$BASHCTRL_DEPTH"
+	      echo "DOING STEP: $step_title"
+	    )
 	    step_title=""
 	fi
     }
@@ -122,9 +127,10 @@ optimized-actions-with-terse-output-definitions()
 	# groups, here is a reliable place to update the value of
 	# $BASHCTRL_DEPTH.
 	export group_title="$*"
-	outline_header_at_depth "$BASHCTRL_DEPTH"
+	( set +x
+	  outline_header_at_depth "$BASHCTRL_DEPTH"
+	  echo "$group_title" )
 	(( BASHCTRL_DEPTH++ ))
-	echo "$group_title"
     }
     export -f remember_and_output_group_title_in_outline
     
@@ -185,12 +191,29 @@ status-definitions()
     skip_rest_if_already_done=status_skip_step
     skip_step_if_already_done=status_skip_step
 
+    if $verboseoption; then
+	starting_step_extra_hook=extra_for_status
+	export starting_step_extra_hook
+	
+	extra_for_status()
+	{
+	    (
+		set +x
+		outline_header_at_depth "$BASHCTRL_DEPTH"
+		echo "vvvvvvvvvvvvvvvvv"
+	    )
+	    set -x
+	}
+	export -f extra_for_status
+    fi
+
     export skip_whole_tree=''
     skip_group_if_unnecessary='eval (( $? == 0 )) && skip_whole_tree=,skippable'
     
     status_skip_step()
     {
 	rc="$?"
+	set +x
 	outline_header_at_depth "$BASHCTRL_DEPTH"
 	echo -n "$step_title"
 	if (($rc == 0)); then
@@ -259,6 +282,7 @@ choosecmd()
 cmdline=( )
 usetac=false
 bashxoption=""
+export verboseoption=false
 parse-parameters()
 {
     while [ "$#" -gt 0 ]; do
@@ -304,6 +328,9 @@ parse-parameters()
 		;;
 	    bashx)
 		bashxoption='bash -x'
+		;;
+	    verbose)
+		verboseoption=true
 		;;
 	    *)
 		cmdline=( "${cmdline[@]}" "$1" )
