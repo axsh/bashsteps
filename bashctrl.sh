@@ -41,6 +41,7 @@ null-definitions()
     # and the steps should already be ordered so that steps that
     # require preconditions are always run after steps that establish
     # the same preconditions.
+    
     : ${starting_step:=":"}
     : ${starting_group:=":"}
     : ${skip_step_if_already_done:=":"}
@@ -48,16 +49,31 @@ null-definitions()
 }
 
 
-default-definitions()
+# This set of definitions is probably the simplest where all four hooks
+# serves a purpose.
+optimized-actions-with-terse-output-definitions()
 {
-    : ${starting_step:=just_remember_step_title}
-    : ${skip_step_if_already_done:=output_title_and_skipinfo_at_outline_depth}
+    # This is a complete set of hook definitions that lets the script
+    # run through and complete all not-yet-done actions.  For each
+    # individual steps, it lets the check part run, and if the checks
+    # succeed, it skips the action portion.  A status line for each
+    # step is sent to stdout after the checks and before the actions.
+    # The status line is indented in org-mode style to reflect the
+    # outline depth computed by the group hooks.  At the start of each
+    # group, a status line is immediately sent to stdout.  Then checks
+    # (if any) for the step are done and if the checks succeed, the
+    # rest of the group (and any groups or steps inside) are
+    # completely skipped.  Therefore, for some steps it is possible
+    # that none of the hooks are touched.
 
-    : ${starting_group:=remember_and_output_group_title_in_outline}
-    : ${skip_group_if_unnecessary:=maybe_skip_group_and_output_if_skipping}
+    : ${starting_step:=just_remember_step_title}  # OPTIONAL
+    : ${skip_step_if_already_done:=output_title_and_skipinfo_at_outline_depth} # REQUIRED
+
+    : ${starting_group:=remember_and_output_group_title_in_outline} # REQUIRED
+    : ${skip_group_if_unnecessary:=maybe_skip_group_and_output_if_skipping} # OPTIONAL
 
     export BASHCTRL_DEPTH=1
-    just_remember_step_title()
+    just_remember_step_title() # for $starting_step
     {
 	# This hook appears at the start of a step, so defining the
 	# step title here make the title appear at the start of the
@@ -73,14 +89,14 @@ default-definitions()
     }
     export -f just_remember_step_title
 
-    output_title_and_skipinfo_at_outline_depth()
+    output_title_and_skipinfo_at_outline_depth() # for $skip_step_if_already_done
     {
 	# This hook implements the step skipping functionality plus
 	# adds minimal output.  It reads the error code from the
 	# checking code and if it shows success (rc==0), then it
 	# assumes that the step has already been done and that it can
 	# be skipped.  It assumes $step_title has already been set.
-	# TODO: put try to put in useful simple info when $step_title
+	# TODO: try to put in useful simple info when $step_title
 	# is not set.  It assumes $BASHCTRL_DEPTH is correct.
 	if (($? == 0)); then
 	    outline_header_at_depth "$BASHCTRL_DEPTH"
@@ -96,7 +112,7 @@ default-definitions()
     }
     export -f output_title_and_skipinfo_at_outline_depth
 
-    remember_and_output_group_title_in_outline()
+    remember_and_output_group_title_in_outline() # for $starting_group
     {
 	# This hook outputs remembers the group title in a bash
 	# variable and outputs it immediately to the outline log.  The
@@ -112,7 +128,7 @@ default-definitions()
     }
     export -f remember_and_output_group_title_in_outline
     
-    maybe_skip_group_and_output_if_skipping()
+    maybe_skip_group_and_output_if_skipping() # for $skip_group_if_unnecessary
     {
 	# If the preceding bash statement returns success (rc==0),
 	# this hook skips the whole group, including the checks of any
@@ -254,14 +270,14 @@ parse-parameters()
 	    in-order | debug)
 		choosecmd "$1"
 		helper-function-definitions
-		default-definitions
+		optimized-actions-with-terse-output-definitions
 		echo "* An in-order list of steps with bash nesting info.  No attempt to show hierarchy:"
 		dump1-definitions
 		;;
 	    status-all | status)
 		choosecmd "$1"
 		helper-function-definitions
-		default-definitions
+		optimized-actions-with-terse-output-definitions
 		status-definitions
 		echo "* Status of all steps in dependency hierarchy with no pruning"
 		;;
@@ -269,20 +285,20 @@ parse-parameters()
 		choosecmd "$1"
 		export title_glob="$2" ; shift
 		helper-function-definitions
-		default-definitions
+		optimized-actions-with-terse-output-definitions
 		status-definitions
 		filter-definitions
 		;;
 	    [d]o)
 		choosecmd "$1"
 		helper-function-definitions
-		default-definitions
+		optimized-actions-with-terse-output-definitions
 		;;
 	    [d]o1)
 		choosecmd "$1"
 		export title_glob="$2" ; shift
 		helper-function-definitions
-		default-definitions
+		optimized-actions-with-terse-output-definitions
 		do1-definitions
 		filter-definitions
 		;;
