@@ -270,6 +270,7 @@ do1-definitions()
 	    echo ; echo "** DOING STEP: $step_title"
 	    step_title=""
 	fi
+	$verboseoption && set -x
     }
     export -f do1_skip_step
 }
