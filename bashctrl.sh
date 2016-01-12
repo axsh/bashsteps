@@ -113,6 +113,7 @@ optimized-actions-with-terse-output-definitions()
 	      echo "DOING STEP: $step_title"
 	    )
 	    step_title=""
+	    $verboseoption && set -x
 	fi
     }
     export -f output_title_and_skipinfo_at_outline_depth
