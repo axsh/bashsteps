@@ -239,6 +239,7 @@ filter-definitions()
 	    step_title=""
 	    exit 0
 	fi
+	$starting_step_extra_hook
     }
     export -f filter_header_step
 
