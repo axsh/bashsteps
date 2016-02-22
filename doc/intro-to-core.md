@@ -27,15 +27,12 @@ progress updates, debugging tools, etc.) Unfortunately, using such a
 framework requires more upfront effort to understand the
 framework(s), choose the framework, install the frameworks, and adapt
 the script to the framework.  With either solution, there are real
-risks that would discourage adding the enhancements.
+risks that discourage adding the enhancements.
 
-The goal of bashsteps is to address these risks with a framework that
-addresses the needs of the programmer who has already started a script
-and later wishes the enhancements had already been added.  It is
-designed to be extremely easy to get started, have a stable core, and
-be flexible enough to choose among various implementations of the
-framework later.  By keeping everything in bash, dependencies are
-minimized.
+The goal of bashsteps is to address these risks.  It is designed to be
+extremely easy to get started, have a stable core, and be flexible
+enough to choose among various implementations of the framework later.
+By keeping everything in bash, dependencies are minimized.
 
 An implementation of the simplest framework for bashsteps is so
 simple, it is possible to memorize it:
@@ -122,8 +119,8 @@ following:
 Therefore without downloading or installing any extra code, a bash
 programmer can use these constructions at the very early stages of
 writing a script.  Then when the actual need for the various
-benefits arises, the programmer has the option to choose and download
-the framework implementation that provides the benefits.
+benefits arises, the programmer has the option to find and download
+whatever framework implementation can provide the benefits.
 
 And if access to this repository is possible, a modest, well-tested
 bashsteps framework implementation can be added to the project to
