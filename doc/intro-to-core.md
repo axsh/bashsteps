@@ -13,10 +13,10 @@ beginning.
 
 For example, consider this 4 line script (pseudo code):
 
-git clone some/server
-cd server
-make
-make install
+    git clone some/server
+    cd server
+    make
+    make install
 
 There are many ways to do add the two enhancements to this code.  This
 could be done directly with well-placed conditional statements, but
@@ -40,26 +40,26 @@ minimized.
 An implementation of the simplest framework for bashsteps is so
 simple, it is possible to memorize it:
 
-: ${prev_cmd_failed:=':'}
-: ${skip_step_if_already_done:=':'}
+    : ${prev_cmd_failed:=':'}
+    : ${skip_step_if_already_done:=':'}
 
 These two bash variables are all that is needed to do a simple
 enhancement of the example script above:
 
-(  # download
-   false
-   $skip_if_already_done
-   cd /tmp
-   git clone some/server
-) ; $prev_cmd_failed
-
-(  # compile and install
-   false
-   $skip_if_already_done
-   cd /tmp/server
-   make
-   make install
-) ; $prev_cmd_failed
+    (  # download
+       false
+       $skip_if_already_done
+       cd /tmp
+       git clone some/server
+    ) ; $prev_cmd_failed
+    
+    (  # compile and install
+       false
+       $skip_if_already_done
+       cd /tmp/server
+       make
+       make install
+    ) ; $prev_cmd_failed
 
 At this point, there is no change in functionality, so no benefits
 yet.  The purpose here is to illustrate that (at least sometimes)
@@ -73,20 +73,20 @@ steps, and vise versa.
 Now that we have created a couple steps, the lines that can test
 whether the step has been done can be inserted:
 
-(  # download
-   [ -d /tmp/some/server ]
-   $skip_if_already_done
-   cd /tmp
-   git clone some/server
-) ; $prev_cmd_failed
-
-(  # compile and install
-   [ -f /usr/bin/serverbin ]
-   $skip_if_already_done
-   cd /tmp/server
-   make
-   make install
-) ; $prev_cmd_failed
+    (  # download
+       [ -d /tmp/some/server ]
+       $skip_if_already_done
+       cd /tmp
+       git clone some/server
+    ) ; $prev_cmd_failed
+    
+    (  # compile and install
+       [ -f /usr/bin/serverbin ]
+       $skip_if_already_done
+       cd /tmp/server
+       make
+       make install
+    ) ; $prev_cmd_failed
 
 Now the script has been enhanced by both splitting it into steps and
 by including code that can test whether the step has been done.  With
@@ -96,8 +96,8 @@ is still unchanged.
 To start getting benefits, here is a still-quite-simple framework
 implementation can be used with the above script:
 
-: ${prev_cmd_failed:='eval [ $? == 0 ] || exit'}
-: ${skip_step_if_already_done:='eval [ $? == 0 ] && exit'}
+    : ${prev_cmd_failed:='eval [ $? == 0 ] || exit'}
+    : ${skip_step_if_already_done:='eval [ $? == 0 ] && exit'}
 
 Using these definitions, the script can now start to use the tests.
 For any step that has been done, the step is automatically skipped,
@@ -113,11 +113,11 @@ all the extensions are used, a minimal implementation that lets the
 script run with the original functionality can be done with only the
 following:
 
-: ${prev_cmd_failed:=':'}
-: ${starting_step:=':'}
-: ${skip_step_if_already_done:=':'}
-: ${starting_group:=':'}
-: ${skip_group_if_already_done:=':'}
+    : ${prev_cmd_failed:=':'}
+    : ${starting_step:=':'}
+    : ${skip_step_if_already_done:=':'}
+    : ${starting_group:=':'}
+    : ${skip_group_if_already_done:=':'}
 
 Therefore without downloading or installing any extra code, a bash
 programmer can use these constructions at the very early stages of
