@@ -41,7 +41,7 @@ EOF
 	$skip_step_if_already_done; set -e
 	rm hw.c
     )
-)
+) ; $prev_cmd_failed
 (
     $starting_step "run binary"
     [ -f "$DATADIR/result" ]

@@ -27,7 +27,10 @@ helper-function-definitions()
 	(($? == 0)) || reportfailed "$*"
     }
     export -f prev_cmd_failed
-    exit_if_failed=prev_cmd_failed
+
+    # for consistency, start to use the variable form for everything
+    ${prev_cmd_failed='eval [ $? = 0 ] || exit 255'}
+    export prev_cmd_failed
 }
     
 null-definitions()

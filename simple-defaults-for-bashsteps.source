@@ -43,6 +43,10 @@ if ! declare -f prev_cmd_failed >/dev/null; then
 fi
 export -f prev_cmd_failed
 
+# for consistency, start to use the variable form for everything
+${prev_cmd_failed='eval [ $? = 0 ] || exit 255'}
+export prev_cmd_failed
+
 export CODEDIR="$(cd "$(dirname "$0")" && pwd -P)" || reportfailed
 [ "$DATADIR" == "" ] && export DATADIR="$CODEDIR/output"
 # put the current directory someplace unwritable to force use
