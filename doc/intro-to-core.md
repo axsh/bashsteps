@@ -1,8 +1,9 @@
 
 The motivation for bashsteps is that some scripts can benefit from
 putting extra effort up front to have two types of enhancements.  The
-first is to break the script up into meaningful steps.  The second is
-to write code that can test whether each step has been done or not.
+first enhancement is to break the script up into meaningful steps.
+The second is to write code that can test whether each step has been
+done or not.
 
 For some types of scripts (for example very short ones, or
 non-destructive, fast executing scripts), it is not worth the effort.
@@ -27,7 +28,7 @@ progress updates, debugging tools, etc.) Unfortunately, using such a
 framework requires more upfront effort to understand the
 framework(s), choose the framework, install the frameworks, and adapt
 the script to the framework.  With either solution, there are real
-risks that discourage adding the enhancements.
+risks that discourage adding the enhancements in the first place.
 
 The goal of bashsteps is to address these risks.  It is designed to be
 extremely easy to get started, have a stable core, and be flexible
@@ -105,7 +106,7 @@ destructive.
 The above is a simple introduction just to the core of bashsteps.
 When applying it to realistic examples, limitations have
 unsurprisingly been encountered.  At this time a few extensions to
-above have been introduced.  Things are still simple though.  Even if
+the above have been introduced.  Things are still simple though.  Even if
 all the extensions are used, a minimal implementation that lets the
 script run with the original functionality can be done with only the
 following:

@@ -81,7 +81,7 @@ cd -P /proc/self
 
 ##  $starting_step and $skip_step_if_already_done are simple bash variables
 ##  and can serve as hooks for controlling the script in useful ways.
-##  The setting below provide simple defaults that provide some log output
+##  The settings below provide simple defaults that provide some log output
 ##  and some idempotent behavior.
 
 ##  The action of $starting_step as defined below is to only remember the title.

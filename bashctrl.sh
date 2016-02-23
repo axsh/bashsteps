@@ -35,7 +35,7 @@ helper-function-definitions()
     
 null-definitions()
 {
-    # The simplest bashsteps hookpossible is ":", which just let
+    # The simplest bashsteps hook possible is ":", which just lets
     # control passthru the hooks without any effect. ("" will not work
     # because hooks can be invoked with parameter, and the null
     # operation must ignore the parameters.)  In general, a script
@@ -63,9 +63,9 @@ optimized-actions-with-terse-output-definitions()
     # step is sent to stdout after the checks and before the actions.
     # The status line is indented in org-mode style to reflect the
     # outline depth computed by the group hooks.  At the start of each
-    # group, a status line is immediately sent to stdout.  Then checks
-    # (if any) for the step are done and if the checks succeed, the
-    # rest of the group (and any groups or steps inside) are
+    # group, a status line is immediately sent to stdout.  Then the
+    # check for the group (if any) are done and if the check succeed,
+    # the rest of the group (and any groups or steps inside) are
     # completely skipped.  Therefore, for some steps it is possible
     # that none of the hooks are touched.
 
@@ -123,7 +123,7 @@ optimized-actions-with-terse-output-definitions()
 
     remember_and_output_group_title_in_outline() # for $starting_group
     {
-	# This hook outputs remembers the group title in a bash
+	# This hook remembers the group title in a bash
 	# variable and outputs it immediately to the outline log.  The
 	# hook is required for groups, and the other group hooks are
 	# optional so here is the only (straightforward) place to do
