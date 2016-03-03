@@ -297,42 +297,23 @@ parse-parameters()
 	case "$1" in
 	    nulldefs | passthru)
 		choosecmd "$1"
-		null-definitions
 		;;
 	    in-order | debug)
 		choosecmd "$1"
-		helper-function-definitions
-		optimized-actions-with-terse-output-definitions
-		echo "* An in-order list of steps with bash nesting info.  No attempt to show hierarchy:"
-		dump1-definitions
 		;;
 	    status-all | status)
 		choosecmd "$1"
-		helper-function-definitions
-		optimized-actions-with-terse-output-definitions
-		status-definitions
-		echo "* Status of all steps in dependency hierarchy with no pruning"
 		;;
 	    status1)
 		choosecmd "$1"
 		export title_glob="$2" ; shift
-		helper-function-definitions
-		optimized-actions-with-terse-output-definitions
-		status-definitions
-		filter-definitions
 		;;
 	    [d]o)
 		choosecmd "$1"
-		helper-function-definitions
-		optimized-actions-with-terse-output-definitions
 		;;
 	    [d]o1)
 		choosecmd "$1"
 		export title_glob="$2" ; shift
-		helper-function-definitions
-		optimized-actions-with-terse-output-definitions
-		do1-definitions
-		filter-definitions
 		;;
 	    bashx)
 		bashxoption='bash -x'
@@ -351,7 +332,42 @@ parse-parameters()
 bashctrl-main()
 {
     parse-parameters "$@"
-    [ "$thecmd" != "" ] || reportfailed "No command chosen"
+    case "$thecmd" in
+	nulldefs | passthru)
+	    null-definitions
+	    ;;
+	in-order | debug)
+	    helper-function-definitions
+	    optimized-actions-with-terse-output-definitions
+	    echo "* An in-order list of steps with bash nesting info.  No attempt to show hierarchy:"
+	    dump1-definitions
+	    ;;
+	status-all | status)
+	    helper-function-definitions
+	    optimized-actions-with-terse-output-definitions
+	    status-definitions
+	    echo "* Status of all steps in dependency hierarchy with no pruning"
+	    ;;
+	status1)
+	    helper-function-definitions
+	    optimized-actions-with-terse-output-definitions
+	    status-definitions
+	    filter-definitions
+	    ;;
+	[d]o)
+	    helper-function-definitions
+	    optimized-actions-with-terse-output-definitions
+	    ;;
+	[d]o1)
+	    helper-function-definitions
+	    optimized-actions-with-terse-output-definitions
+	    do1-definitions
+	    filter-definitions
+	    ;;
+	*)
+	    reportfailed "No command chosen"
+	    ;;
+    esac
     if $usetac; then
 	$bashxoption "${cmdline[@]}" | tac
     else
