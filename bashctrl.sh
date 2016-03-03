@@ -287,6 +287,22 @@ choosecmd()
     thecmd="$1"
 }
 
+# status1 and do1 now take the pattern appended to the command
+# to make parsing easier. For example:
+#   status1-yum   -> give status of all titles matching *yum*.
+#   'do1-*Install'  -> do all steps with titles that start with "Install"
+glob_heuristics()
+{
+    [ "$1" = "" ] && reportfailed "A pattern must be appended to the command"
+    if [[ "$1" == *\** ]]; then
+	# if it already has a glob character, return unchanged
+	echo "$1"
+    else
+	# else wrap so that the fixed string can match anywhere in the title
+	echo "*$1*"
+    fi
+}
+
 cmdline=( )
 usetac=false
 bashxoption=""
@@ -304,16 +320,16 @@ parse-parameters()
 	    status-all | status)
 		choosecmd "$1"
 		;;
-	    status1)
-		choosecmd "$1"
-		export title_glob="$2" ; shift
+	    status1-*)
+		choosecmd "${1%%-*}"
+		export title_glob="$(glob_heuristics "${1#status1-}")"
 		;;
 	    [d]o)
 		choosecmd "$1"
 		;;
-	    [d]o1)
-		choosecmd "$1"
-		export title_glob="$2" ; shift
+	    [d]o1-*)
+		choosecmd "${1%%-*}"
+		export title_glob="$(glob_heuristics "${1#do1-}")"
 		;;
 	    bashx)
 		bashxoption='bash -x'
