@@ -192,7 +192,9 @@ dump1-definitions()
 
 status-definitions()
 {
-    skip_rest_if_already_done=status_skip_step
+    # make status safer when used with scripts using old style
+    export skip_rest_if_already_done=status_skip_step
+
     skip_step_if_already_done=status_skip_step
 
     if $verboseoption; then
