@@ -1,14 +1,27 @@
-# Sourcing this code defines and exports the following:
-#   reportfailed(), prev_cmd_failed(), $DATADIR,
-#   $starting_dependents, $starting_checks, and
-#   $skip_rest_if_already_done.
+# For more documentation and a wrapper script that adds more
+# functionality, refer to the following repository:
+# https://github.com/triggers/bashsteps
 
-# It also exports this new framework which will hopefully
-# soon replace some of the above:
+# Sourcing this code defines and exports the following:
 #   $starting_step
 #   $skip_step_if_already_done
 #   $starting_group
 #   $skip_group_if_unnecessary
+#   $prev_cmd_failed
+
+# It also exports a few depreciated items
+# to keep older scripts working somewhat:
+#   $starting_dependents
+#   $starting_checks
+#   $skip_rest_if_already_done
+#   prev_cmd_failed()
+
+# And these extras:
+#   reportfailed()
+
+# Finally some experimental stuff:
+#   $DATADIR, $CODEDIR
+
 
 # For any of these that are already defined, no change is made but the
 # item is still exported.  Therefore, simple subscripts steps that are
@@ -23,7 +36,7 @@
 # to the directory of the link, not final target of the link.
 
 if ! declare -f reportfailed >/dev/null; then
-    reportfailed()		      
+    reportfailed()
     {
 	echo "Script failed...exiting. ($*)" 1>&2
 	exit 255
@@ -47,13 +60,35 @@ export -f prev_cmd_failed
 ${prev_cmd_failed='eval [ $? = 0 ] || exit 255'}
 export prev_cmd_failed
 
-export CODEDIR="$(cd "$(dirname "$0")" && pwd -P)" || reportfailed
-[ "$DATADIR" == "" ] && export DATADIR="$CODEDIR/output"
-# put the current directory someplace unwritable to force use
-# of the above variables
+# According to the Bash docs, $0 is definitely unchanged if this
+# script is sourced without parameters.  So the path for $ORGCODEDIR
+# will be the directory of the calling script, which is useful for
+# accessing other scripts and files bundled with the source code.
+# When the code is called with a symbolic link, $LINKCODEDIR will be
+# the directory of that link, which is useful for a
+# somewhat-object-oriented style of scripting that treats directories
+# as objects with script links that serve as methods.
+
+export ORGCODEDIR="$(cd "$(dirname $(readlink -f "$0"))" && pwd -P)" || reportfailed
+export LINKCODEDIR="$(cd "$(dirname "$0")" && pwd -P)" || reportfailed
+export CODEDIR="$LINKCODEDIR" # backwards compatibility
+
+# A major reason for using the bashsteps framework when writing a
+# script is to make it possible to partially run a script and then
+# later run the rest by invoking the script again.  Therefore in most
+# cases, this means that state that would normally be kept in script
+# variables must be saved persistently elsewhere.  The purpose of
+# $DATADIR is to designate a special directory for saving and
+# accessing such information.  There is probably no good default
+# location for $DATADIR, so force the script to set it appropriately.
+
+[ "$DATADIR" = "" ] && export DATADIR="/bug/the-main-script-should-have-set-DATADIR"
+
+# Put the current directory somewhere unwritable to force use
+# of the above variables.
 cd -P /proc/self
 
-## Hints to understand the scripts that source this file:
+## More hints to understand the scripts that source this file:
 
 ## (1) Every step is put in its own process.  The easiest way to do this
 ##     is to use ( ), but calling other scripts is also possible for
@@ -101,6 +136,7 @@ cd -P /proc/self
 ## to ":", which should (if everything is written correctly) turn the scripts
 ## back into a typical script that blindly runs from start to finish.
 
+# depreciated:
 : ${starting_dependents:=default_set_title}
 : ${starting_checks:=default_set_title}
 : ${skip_rest_if_already_done:=default_skip_step} # exit (sub)process if return code is 0
