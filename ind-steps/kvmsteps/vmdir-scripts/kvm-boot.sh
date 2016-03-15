@@ -44,23 +44,12 @@ calculate_ports
 
     build-cmd-line() # a function, not a step
     {
-	cat <<EOF
-	    $KVMBIN
-
-	    -m $KVMMEM
-	    -smp 2
-	    -name kvmsteps
-
-	    -monitor telnet:127.0.0.1:$MONPORT,server,nowait
-	    -no-kvm-pit-reinjection
-	    -vnc 127.0.0.1:$VNCPORT
-	    -serial telnet:127.0.0.1:$SERPORT,server,nowait
-	    -drive file=$IMAGEFILENAME,id=vol-tu3y7qj4-drive,if=none,serial=vol-tu3y7qj4,cache=none,aio=native
-	    -device virtio-blk-pci,id=vol-tu3y7qj4,drive=vol-tu3y7qj4-drive,bootindex=0,bus=pci.0,addr=0x4
-
-	    -net nic,vlan=0,macaddr=52:54:00:65:28:dd,model=virtio,addr=10
-	    -net user,vlan=0,hostfwd=tcp::$SSHPORT-:22$EXTRAHOSTFWD
-EOF
+	# dynamically insert template into a Here document and let bash expand it
+	set -u # catch template variables not defined
+	eval "$( echo 'cat <<EOF'
+                 cat "$DATADIR/kvm-cmdline.template" 
+                 echo EOF )" >"$DATADIR/kvm-cmdline" && \
+	    cat "$DATADIR/kvm-cmdline"
     }
 
     portcollision()
@@ -105,7 +94,7 @@ EOF
 	while $repeat; do
 	    repeat=false
 	    ( # using a temporary subprocess to supress job control messages
-		kpat=( $(build-cmd-line) )
+		kpat=( $(build-cmd-line) ) || reportfailed 'expansion of KVM command line template failed'
 		setsid "$ORGCODEDIR/../monitor-process.sh" runinfo/kvm "${kpat[@]}" &
 	    )
 	    for s in ${kvmearlychecks:=1 1 1 1 1} ; do # check early errors for 5 seconds
