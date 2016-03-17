@@ -79,7 +79,7 @@ optimized-actions-with-terse-output-definitions()
     just_remember_step_title() # for $starting_step
     {
 	# This hook appears at the start of a step, so defining the
-	# step title here make the title appear at the start of the
+	# step title here lets the title appear at the start of the
 	# step in the source code.  However, during execution it is
 	# desirable to display other information that is not available
 	# yet along with the title.  Therefore this step only
