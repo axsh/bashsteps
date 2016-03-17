@@ -221,7 +221,8 @@ status-definitions()
 	rc="$?"
 	set +x
 	outline_header_at_depth "$BASHCTRL_DEPTH"
-	echo -n "$step_title"
+	read count <&78
+	echo -n "$count-$step_title"
 	if (($rc == 0)); then
 	    echo " (DONE$skip_whole_tree)"
 	    step_title=""
@@ -232,6 +233,10 @@ status-definitions()
 	exit 0 # Always, because we are just checking status
     }
     export -f status_skip_step
+
+    # create a counter (up to 1000!) for all subprocesses to share.
+    # (seems to be killed automatically by SIGHUP)
+    exec 78< <(seq 1 1000)
 }
 
 filter-definitions()
