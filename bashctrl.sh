@@ -133,7 +133,7 @@ optimized-actions-with-terse-output-definitions()
 	export group_title="$*"
 	( set +x
 	  outline_header_at_depth "$BASHCTRL_DEPTH"
-	  echo "$group_title" )
+	  echo "[[$group_title]]" )
 	(( BASHCTRL_DEPTH++ ))
     }
     export -f remember_and_output_group_title_in_outline
@@ -188,6 +188,39 @@ dump1-definitions()
 	echo "** : $step_title  (\$SHLVL=$SHLVL, \$BASH_SUBSHELL=$BASH_SUBSHELL)"
     }
     export -f dump1_header
+}
+
+quick-definitions()
+{
+    starting_step=remember_and_output_step_title_in_outline
+    starting_group=remember_and_output_group_title_in_outline
+    skip_step_if_already_done='echo BUG; exit 0'
+    skip_group_if_unnecessary=':'
+    export starting_step
+    export starting_group
+    export skip_step_if_already_done
+    export skip_group_if_already_done
+
+    remember_and_output_step_title_in_outline() # for $starting_step
+    {
+	# This hook remembers the step title in a bash variable and
+	# outputs it immediately to the outline log.  It then
+	# immediately exist, so nothing in the step is executed.  For
+	# this to work as intended, every step must have a
+	# $starting_step hook.
+
+	export step_title="$*"
+	( set +x
+	  outline_header_at_depth "$BASHCTRL_DEPTH"
+	  read count <&78
+	  echo "$count-$step_title" )
+	exit 0 # Move on to next step!
+    }
+    export -f remember_and_output_step_title_in_outline
+
+    # create a counter (up to 1000!) for all subprocesses to share.
+    # (seems to be killed automatically by SIGHUP)
+    exec 78< <(seq 1 1000)
 }
 
 status-definitions()
@@ -322,6 +355,9 @@ parse-parameters()
 	    in-order | debug)
 		choosecmd "$1"
 		;;
+	    quick)
+		choosecmd "$1"
+		;;
 	    status-all | status)
 		choosecmd "$1"
 		;;
@@ -362,6 +398,12 @@ bashctrl-main()
 	    optimized-actions-with-terse-output-definitions
 	    echo "* An in-order list of steps with bash nesting info.  No attempt to show hierarchy:"
 	    dump1-definitions
+	    ;;
+	quick)
+	    helper-function-definitions
+	    optimized-actions-with-terse-output-definitions
+	    echo "* An in-order list of steps with bash nesting info.  No evaluation of status checks."
+	    quick-definitions
 	    ;;
 	status-all | status)
 	    helper-function-definitions
