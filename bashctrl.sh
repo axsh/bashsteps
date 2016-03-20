@@ -76,6 +76,7 @@ optimized-actions-with-terse-output-definitions()
     : ${skip_group_if_unnecessary:=maybe_skip_group_and_output_if_skipping} # OPTIONAL
 
     export BASHCTRL_DEPTH=1
+    export BASHCTRL_INDEX=1
     just_remember_step_title() # for $starting_step
     {
 	# This hook appears at the start of a step, so defining the
@@ -135,8 +136,17 @@ optimized-actions-with-terse-output-definitions()
 	  outline_header_at_depth "$BASHCTRL_DEPTH"
 	  echo "[[$group_title]]" )
 	(( BASHCTRL_DEPTH++ ))
+	parents=""
+	[[ "$BASHCTRL_INDEX" == *.* ]] && parents="${BASHCTRL_INDEX%.*}".
+	read nextcount <&78
+	BASHCTRL_INDEX="$parents$nextcount.yyy"
+	exec 78< <(seq 1 1000)
     }
     export -f remember_and_output_group_title_in_outline
+
+    # initialize top level index
+    BASHCTRL_INDEX="1"
+    exec 78< <(seq 1 1000)
     
     maybe_skip_group_and_output_if_skipping() # for $skip_group_if_unnecessary
     {
@@ -189,10 +199,10 @@ dump1-definitions()
     }
     export -f dump1_header
 }
-
+exec 88< <(seq 1 100) # debug counter
 quick-definitions()
 {
-    starting_step=remember_and_output_step_title_in_outline
+    starting_step=immediately_output_step_title_in_outline
     starting_group=remember_and_output_group_title_in_outline
     skip_step_if_already_done='echo BUG; exit 0'
     skip_group_if_unnecessary=':'
@@ -201,7 +211,7 @@ quick-definitions()
     export skip_step_if_already_done
     export skip_group_if_already_done
 
-    remember_and_output_step_title_in_outline() # for $starting_step
+    immediately_output_step_title_in_outline() # for $starting_step
     {
 	# This hook remembers the step title in a bash variable and
 	# outputs it immediately to the outline log.  It then
@@ -212,15 +222,20 @@ quick-definitions()
 	export step_title="$*"
 	( set +x
 	  outline_header_at_depth "$BASHCTRL_DEPTH"
-	  read count <&78
-	  echo "$count-$step_title" )
+	  parents=""
+	  [[ "$BASHCTRL_INDEX" == *.* ]] && parents="${BASHCTRL_INDEX%.*}".
+	  read nextcount <&78
+	  leafindex="${BASHCTRL_INDEX##*.}"
+	  BASHCTRL_INDEX="$parents$nextcount"
+	  echo "$BASHCTRL_INDEX-$step_title" )
+	read debugcount <&88
+	(( debugcount > 8 )) && exit 0
 	exit 0 # Move on to next step!
     }
-    export -f remember_and_output_step_title_in_outline
+    export -f immediately_output_step_title_in_outline
 
     # create a counter (up to 1000!) for all subprocesses to share.
     # (seems to be killed automatically by SIGHUP)
-    exec 78< <(seq 1 1000)
 }
 
 status-definitions()
@@ -254,8 +269,7 @@ status-definitions()
 	rc="$?"
 	set +x
 	outline_header_at_depth "$BASHCTRL_DEPTH"
-	read count <&78
-	echo -n "$count-$step_title"
+	echo -n "$BASHCTRL_INDEX-$step_title"
 	if (($rc == 0)); then
 	    echo " (DONE$skip_whole_tree)"
 	    step_title=""
@@ -269,7 +283,6 @@ status-definitions()
 
     # create a counter (up to 1000!) for all subprocesses to share.
     # (seems to be killed automatically by SIGHUP)
-    exec 78< <(seq 1 1000)
 }
 
 filter-definitions()
