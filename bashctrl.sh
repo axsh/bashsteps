@@ -131,16 +131,17 @@ optimized-actions-with-terse-output-definitions()
 	# such output.  Also, since this hook is required for all
 	# groups, here is a reliable place to update the value of
 	# $BASHCTRL_DEPTH.
-	export group_title="$*"
-	( set +x
-	  outline_header_at_depth "$BASHCTRL_DEPTH"
-	  echo "[[$group_title]]" )
-	(( BASHCTRL_DEPTH++ ))
 	parents=""
 	[[ "$BASHCTRL_INDEX" == *.* ]] && parents="${BASHCTRL_INDEX%.*}".
 	read nextcount <&78
 	BASHCTRL_INDEX="$parents$nextcount.yyy"
 	exec 78< <(seq 1 1000)
+
+	export group_title="${BASHCTRL_INDEX%.yyy}.0-$*"
+	( set +x
+	  outline_header_at_depth "$BASHCTRL_DEPTH"
+	  echo "[[$group_title]]" )
+	(( BASHCTRL_DEPTH++ ))
     }
     export -f remember_and_output_group_title_in_outline
 
@@ -218,16 +219,16 @@ quick-definitions()
 	# immediately exist, so nothing in the step is executed.  For
 	# this to work as intended, every step must have a
 	# $starting_step hook.
+	parents=""
+	[[ "$BASHCTRL_INDEX" == *.* ]] && parents="${BASHCTRL_INDEX%.*}".
+	read nextcount <&78
+	leafindex="${BASHCTRL_INDEX##*.}"
+	BASHCTRL_INDEX="$parents$nextcount"
 
-	export step_title="$*"
+	export step_title="$BASHCTRL_INDEX-$*"
 	( set +x
 	  outline_header_at_depth "$BASHCTRL_DEPTH"
-	  parents=""
-	  [[ "$BASHCTRL_INDEX" == *.* ]] && parents="${BASHCTRL_INDEX%.*}".
-	  read nextcount <&78
-	  leafindex="${BASHCTRL_INDEX##*.}"
-	  BASHCTRL_INDEX="$parents$nextcount"
-	  echo "$BASHCTRL_INDEX-$step_title" )
+	  echo "$step_title" )
 	read debugcount <&88
 	(( debugcount > 8 )) && exit 0
 	exit 0 # Move on to next step!
