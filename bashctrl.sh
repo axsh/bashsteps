@@ -89,7 +89,13 @@ optimized-actions-with-terse-output-definitions()
 	# because that hook is required and all code between this hook
 	# and the "skip_step" hook must execute without side effects
 	# or terminating errors.
-	step_title="$*"
+	parents=""
+	[[ "$BASHCTRL_INDEX" == *.* ]] && parents="${BASHCTRL_INDEX%.*}".
+	read nextcount <&78
+	leafindex="${BASHCTRL_INDEX##*.}"
+	BASHCTRL_INDEX="$parents$nextcount"
+
+	export step_title="$BASHCTRL_INDEX-$*"
 	$starting_step_extra_hook
     }
     export -f just_remember_step_title
@@ -270,7 +276,7 @@ status-definitions()
 	rc="$?"
 	set +x
 	outline_header_at_depth "$BASHCTRL_DEPTH"
-	echo -n "$BASHCTRL_INDEX-$step_title"
+	echo -n "$step_title"
 	if (($rc == 0)); then
 	    echo " (DONE$skip_whole_tree)"
 	    step_title=""
@@ -289,10 +295,17 @@ status-definitions()
 filter-definitions()
 {
     starting_step=filter_header_step
-    starting_group=':'
+    starting_group='filter_header_group'
     filter_header_step()
     {
-	step_title="$*"
+	parents=""
+	[[ "$BASHCTRL_INDEX" == *.* ]] && parents="${BASHCTRL_INDEX%.*}".
+	read nextcount <&78
+	leafindex="${BASHCTRL_INDEX##*.}"
+	BASHCTRL_INDEX="$parents$nextcount"
+
+	export step_title="$BASHCTRL_INDEX-$*"
+#	echo "$step_title" != $title_glob ,,,,,
 	if [[ "$step_title" != $title_glob ]]; then
 	    step_title=""
 	    exit 0
@@ -303,11 +316,11 @@ filter-definitions()
 
     filter_header_group()
     {
-	group_title="$*"
-	if [[ "$group_title" != $title_glob ]]; then
-	    group_title=""
-	    exit 0
-	fi
+	parents=""
+	[[ "$BASHCTRL_INDEX" == *.* ]] && parents="${BASHCTRL_INDEX%.*}".
+	read nextcount <&78
+	BASHCTRL_INDEX="$parents$nextcount.yyy"
+	exec 78< <(seq 1 1000)
     }
     export -f filter_header_group
 }
