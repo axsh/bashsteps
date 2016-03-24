@@ -187,6 +187,18 @@ outline_header_at_depth()
 }
 export -f outline_header_at_depth
 
+outputlineinfo()
+{
+    echo "${BASH_SOURCE[*]}",,,sss-"${#BASH_SOURCE[*]}"
+    echo "$(caller 0),,,ccc 0"
+    echo "$(caller 1),,,ccc 1"
+    echo "$(caller 2),,,ccc 2"
+    echo "${BASH_LINENO[*]}",,,LLL-"${#BASH_LINENO[*]}"
+    echo "${FUNCNAME[*]}",,,LLL-"${#FUNCNAME[*]}"
+    echo "$LINENO"'<<-LINENO'
+}
+export -f outputlineinfo
+
 dump1-definitions()
 {
     starting_step=dump1_header
@@ -236,6 +248,7 @@ quick-definitions()
 	  outline_header_at_depth "$BASHCTRL_DEPTH"
 	  echo "$step_title" )
 	read debugcount <&88
+	outputlineinfo
 	(( debugcount > 8 )) && exit 0
 	exit 0 # Move on to next step!
     }
