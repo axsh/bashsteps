@@ -7,6 +7,26 @@ reportfailed()
 }
 export -f reportfailed
 
+source_lineinfo_collect()
+{
+    index="$1"
+    : ${index:=2}
+    oifs="$IFS"
+    IFS=,
+#    echo ------------------------------
+#    echo FUNCNAME="${FUNCNAME[*]}"
+#    echo BASH_SOURCE="${BASH_SOURCE[*]}"
+#    echo BASH_LINENO="${BASH_LINENO[*]}"
+#    echo ==============================
+    source_lineinfo="::::::::::${BASH_LINENO[1]}:${BASH_SOURCE[index]}:${FUNCNAME[2]}"
+    IFS="$oifs"
+}
+source_lineinfo_output()
+{
+    echo "$source_lineinfo"
+}
+export -f source_lineinfo_collect
+export -f source_lineinfo_output
 
 # The following variables are used to set bashsteps hooks, which are
 # used to control and debug bash scripts that use the bashsteps
@@ -89,6 +109,7 @@ optimized-actions-with-terse-output-definitions()
 	# because that hook is required and all code between this hook
 	# and the "skip_step" hook must execute without side effects
 	# or terminating errors.
+	source_lineinfo_collect
 	parents=""
 	[[ "$BASHCTRL_INDEX" == *.* ]] && parents="${BASHCTRL_INDEX%.*}".
 	read nextcount <&78
@@ -114,14 +135,16 @@ optimized-actions-with-terse-output-definitions()
 	      outline_header_at_depth "$BASHCTRL_DEPTH"
 	    )
 	    echo "Skipping step: $step_title"
+	    source_lineinfo_output
 	    step_title=""
 	    exit 0 # i.e. skip (without error) to end of process/step
 	else
 	    ( set +x
 	      echo
 	      outline_header_at_depth "$BASHCTRL_DEPTH"
-	      echo "DOING STEP: $step_title"
 	    )
+	    echo "DOING STEP: $step_title"
+	    source_lineinfo_output
 	    step_title=""
 	    $verboseoption && set -x
 	fi
@@ -148,6 +171,8 @@ optimized-actions-with-terse-output-definitions()
 	  outline_header_at_depth "$BASHCTRL_DEPTH"
 	  echo "[[$group_title]]" )
 	(( BASHCTRL_DEPTH++ ))
+	source_lineinfo_collect
+	source_lineinfo_output
     }
     export -f remember_and_output_group_title_in_outline
 
@@ -284,7 +309,7 @@ status-definitions()
     export skip_whole_tree=''
     skip_group_if_unnecessary='eval (( $? == 0 )) && skip_whole_tree=,skippable'
     
-    status_skip_step()
+    status_skip_step() # for skip_step_if_already_done
     {
 	rc="$?"
 	set +x
@@ -297,6 +322,7 @@ status-definitions()
 	    echo " (not done$skip_whole_tree)"
 	    step_title=""
 	fi
+	source_lineinfo_output
 	exit 0 # Always, because we are just checking status
     }
     export -f status_skip_step
