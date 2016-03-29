@@ -18,7 +18,9 @@ source_lineinfo_collect()
 #    echo BASH_SOURCE="${BASH_SOURCE[*]}"
 #    echo BASH_LINENO="${BASH_LINENO[*]}"
 #    echo ==============================
-    source_lineinfo="::::::::::${BASH_LINENO[1]}:${BASH_SOURCE[index]}:${FUNCNAME[2]}"
+#    source_lineinfo="::::::::::${BASH_LINENO[1]}:${BASH_SOURCE[index]}:${FUNCNAME[2]}"
+    fullsource="${BASH_SOURCE[index]}::${BASH_LINENO[1]}"
+    source_lineinfo="$(printf "[[%s][%s]]\n" "$fullsource" "${fullsource##*/}")"
     IFS="$oifs"
 }
 source_lineinfo_output()
@@ -497,6 +499,9 @@ bashctrl-main()
 	    reportfailed "No command chosen"
 	    ;;
     esac
+    # make into full path so BASH_SOURCE will have full paths
+    firsttoken="${cmdline[0]}"
+    cmdline[0]="$(readlink -f "$(which "$firsttoken")")"
     if $usetac; then
 	$bashxoption "${cmdline[@]}" | tac
     else
