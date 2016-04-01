@@ -20,7 +20,13 @@ source_lineinfo_collect()
 #    echo ==============================
 #    source_lineinfo="::::::::::${BASH_LINENO[1]}:${BASH_SOURCE[index]}:${FUNCNAME[2]}"
     fullsource="${BASH_SOURCE[index]}::${BASH_LINENO[1]}"
-    source_lineinfo="$(printf "[[%s][%s]]\n" "$fullsource" "${fullsource##*/}")"
+    if [ "$reldir" != "" ] ; then
+	usedsource="${fullsource#${reldir%/}}"
+	[ "$fullsource" != "$usedsource" ] && usedsource=".$usedsource"
+    else
+	usedsource="$fullsource"
+    fi
+    source_lineinfo="$(printf "%10s[[%s][%s]]\n" "" "$usedsource" "${fullsource##*/}")"
     IFS="$oifs"
 }
 source_lineinfo_output()
