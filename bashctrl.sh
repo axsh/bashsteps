@@ -510,9 +510,9 @@ bashctrl-main()
     # from a parent shell, it returns (or will soon return) and empty
     # string.  The following is a workaround to redefine the function
     # in the current process.
-    
-    starting_step='eval eval "$(export -pf)"; '"$starting_step"
-    starting_group='eval eval "$(export -pf)"; '"$starting_group"
+
+    export -pf >"/tmp/export-for-bashctrl-$$"
+    export BASH_ENV="/tmp/export-for-bashctrl-$$"
 
     # make into full path so BASH_SOURCE will have full paths
     firsttoken="${cmdline[0]}"
