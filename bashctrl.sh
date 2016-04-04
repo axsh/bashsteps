@@ -415,9 +415,38 @@ glob_heuristics()
     fi
 }
 
+
+markdown_convert()
+{
+    pat=']['
+    while true; do
+	pref=""
+	while IFS= read -n 1 c; do
+	    if [ "$c" = "*" ]; then
+		pref="#$pref"
+	    else
+		pref="$c$pref"
+		break
+	    fi
+	done
+	if [[ "$pref" == *\# ]]; then
+	    echo
+	    prefs=$'\n'"$prefs"
+	fi
+	IFS= read -r ln || break
+	if [[ "$ln" == *$pat* ]]; then
+	    IFS='[]: ' read a b left c n1 d right n2 e <<<"$ln"
+	    echo "[$right]($left#L$n1)"
+	else
+	    printf "%s\n" "$pref$ln"
+	fi
+    done
+}
+
 cmdline=( )
 bashxoption=""
 export verboseoption=false
+export markdownoption=false
 parse-parameters()
 {
     while [ "$#" -gt 0 ]; do
@@ -450,6 +479,9 @@ parse-parameters()
 		;;
 	    verbose)
 		verboseoption=true
+		;;
+	    markdown)
+		markdownoption=true
 		;;
 	    *)
 		cmdline=( "${cmdline[@]}" "$1" )
@@ -516,7 +548,11 @@ bashctrl-main()
     # make into full path so BASH_SOURCE will have full paths
     firsttoken="${cmdline[0]}"
     cmdline[0]="$(readlink -f "$(which "$firsttoken")")"
-    $bashxoption "${cmdline[@]}"
+    if $markdownoption; then
+	$bashxoption "${cmdline[@]}" | markdown_convert
+    else
+	$bashxoption "${cmdline[@]}"
+    fi
 }
 
 bashctrl-main "$@"
