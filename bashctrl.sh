@@ -416,7 +416,6 @@ glob_heuristics()
 }
 
 cmdline=( )
-usetac=false
 bashxoption=""
 export verboseoption=false
 parse-parameters()
@@ -517,11 +516,7 @@ bashctrl-main()
     # make into full path so BASH_SOURCE will have full paths
     firsttoken="${cmdline[0]}"
     cmdline[0]="$(readlink -f "$(which "$firsttoken")")"
-    if $usetac; then
-	$bashxoption "${cmdline[@]}" | tac
-    else
-	$bashxoption "${cmdline[@]}"
-    fi
+    $bashxoption "${cmdline[@]}"
 }
 
 bashctrl-main "$@"
