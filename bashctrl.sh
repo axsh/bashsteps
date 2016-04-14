@@ -447,6 +447,7 @@ cmdline=( )
 bashxoption=""
 export verboseoption=false
 export markdownoption=false
+export linesoption=false
 parse-parameters()
 {
     while [ "$#" -gt 0 ]; do
@@ -482,6 +483,9 @@ parse-parameters()
 		;;
 	    markdown)
 		markdownoption=true
+		;;
+	    lines)
+		linesoption=true
 		;;
 	    *)
 		cmdline=( "${cmdline[@]}" "$1" )
@@ -537,17 +541,23 @@ bashctrl-main()
 	    ;;
     esac
 
-    # if $BASH_SOURCE is referenced from a function that was exported
-    # from a parent shell, it returns (or will soon return) and empty
-    # string.  The following is a workaround to redefine the function
-    # in the current process.
-
-    export -pf >"/tmp/export-for-bashctrl-$$"
-    export BASH_ENV="/tmp/export-for-bashctrl-$$"
 
     # make into full path so BASH_SOURCE will have full paths
     firsttoken="${cmdline[0]}"
     cmdline[0]="$(readlink -f "$(which "$firsttoken")")"
+
+    if $linesoption; then
+	# if $BASH_SOURCE is referenced from a function that was exported
+	# from a parent shell, it returns (or will soon return) and empty
+	# string.  The following is a workaround to redefine the function
+	# in the current process.
+	export -pf >"/tmp/export-for-bashctrl-$$"
+	export BASH_ENV="/tmp/export-for-bashctrl-$$"
+    else
+	source_lineinfo_collect() { : ; }
+	source_lineinfo_output() { : ; }
+    fi
+
     if $markdownoption; then
 	$bashxoption "${cmdline[@]}" | markdown_convert
     else
