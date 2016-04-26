@@ -177,7 +177,7 @@ optimized-actions-with-terse-output-definitions()
 	export group_title="${BASHCTRL_INDEX%.yyy}.0-$*"
 	( set +x
 	  outline_header_at_depth "$BASHCTRL_DEPTH"
-	  echo "[[$group_title]]" )
+	  echo "(($group_title))" )
 	(( BASHCTRL_DEPTH++ ))
 	source_lineinfo_collect
 	source_lineinfo_output
