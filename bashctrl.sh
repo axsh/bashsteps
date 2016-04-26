@@ -484,7 +484,7 @@ parse-parameters()
 	    markdown)
 		markdownoption=true
 		;;
-	    lines)
+	    lines | links)
 		linesoption=true
 		;;
 	    *)
