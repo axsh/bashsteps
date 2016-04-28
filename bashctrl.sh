@@ -446,10 +446,41 @@ markdown_convert()
     done
 }
 
+orglink_convert()
+{
+    pat=']['
+    while true; do
+	pref=""
+	## read org-mode **... prefixes and convert to markdown headings
+	while IFS= read -n 1 c; do
+	    if [ "$c" = "*" ]; then
+		pref="#$pref"
+	    else
+		pref="$c$pref"
+		break
+	    fi
+	done
+	if [[ "$pref" == *\# ]]; then
+	    echo
+	    prefs=$'\n'"$prefs"
+	fi
+	IFS= read -r ln || break
+	## link line is of the form:  ":  [[file::line#][label::line#]]"
+	if [[ "$ln" == *$pat* ]]; then
+	    IFS='[]: ' read colon1 emptya emptyb filepath emptyc n1 emptyd label emptye n2 rest <<<"$ln"
+	    [ "$emptya$emptyb$emptyc$emptyd$emptye" != "" ] && echo "bug"
+	    echo "[$label]($filepath#L$n1)"
+	else
+	    printf "%s\n" "$pref$ln"
+	fi
+    done
+}
+
 cmdline=( )
 bashxoption=""
 export verboseoption=false
 export markdownoption=false
+export orglinkoption=false
 export linesoption=false
 export reldir="$(pwd)"
 parse-parameters()
@@ -487,6 +518,9 @@ parse-parameters()
 		;;
 	    markdown)
 		markdownoption=true
+		;;
+	    orglink)
+		orglinkoption=true
 		;;
 	    abs* | abspath)
 		reldir=""
@@ -567,6 +601,8 @@ bashctrl-main()
 
     if $markdownoption; then
 	$bashxoption "${cmdline[@]}" | markdown_convert
+    elif $orglinkoption; then
+	$bashxoption "${cmdline[@]}" | orglink_convert
     else
 	$bashxoption "${cmdline[@]}"
     fi
