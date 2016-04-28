@@ -451,6 +451,7 @@ bashxoption=""
 export verboseoption=false
 export markdownoption=false
 export linesoption=false
+export reldir="$(pwd)"
 parse-parameters()
 {
     while [ "$#" -gt 0 ]; do
@@ -486,6 +487,9 @@ parse-parameters()
 		;;
 	    markdown)
 		markdownoption=true
+		;;
+	    abs* | abspath)
+		reldir=""
 		;;
 	    lines | links)
 		linesoption=true
