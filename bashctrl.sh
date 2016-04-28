@@ -448,15 +448,16 @@ markdown_convert()
 
 orglink_convert()
 {
+    saveline="XXX"
     pat=']['
     while true; do
 	pref=""
 	## read org-mode **... prefixes and convert to markdown headings
 	while IFS= read -n 1 c; do
 	    if [ "$c" = "*" ]; then
-		pref="#$pref"
+		pref="*$pref"
 	    else
-		pref="$c$pref"
+		pref="$pref$c"
 		break
 	    fi
 	done
@@ -469,9 +470,11 @@ orglink_convert()
 	if [[ "$ln" == *$pat* ]]; then
 	    IFS='[]: ' read colon1 emptya emptyb filepath emptyc n1 emptyd label emptye n2 rest <<<"$ln"
 	    [ "$emptya$emptyb$emptyc$emptyd$emptye" != "" ] && echo "bug"
-	    echo "[$label]($filepath#L$n1)"
+	    echo "$savepref [[$filepath::$n1][$saveline]]"
+	    saveline="XXX"
 	else
-	    printf "%s\n" "$pref$ln"
+	    savepref="$pref"
+	    saveline="$(printf "%s\n" "$ln")"
 	fi
     done
 }
@@ -519,7 +522,7 @@ parse-parameters()
 	    markdown)
 		markdownoption=true
 		;;
-	    orglink)
+	    orglink*)
 		orglinkoption=true
 		;;
 	    abs* | abspath)
