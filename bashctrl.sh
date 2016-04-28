@@ -31,7 +31,7 @@ source_lineinfo_collect()
 }
 source_lineinfo_output()
 {
-    echo "$source_lineinfo"
+    echo ":: $source_lineinfo"
 }
 export -f source_lineinfo_collect
 export -f source_lineinfo_output
@@ -421,6 +421,7 @@ markdown_convert()
     pat=']['
     while true; do
 	pref=""
+	## read org-mode **... prefixes and convert to markdown headings
 	while IFS= read -n 1 c; do
 	    if [ "$c" = "*" ]; then
 		pref="#$pref"
@@ -434,9 +435,11 @@ markdown_convert()
 	    prefs=$'\n'"$prefs"
 	fi
 	IFS= read -r ln || break
+	## link line is of the form:  ":  [[file::line#][label::line#]]"
 	if [[ "$ln" == *$pat* ]]; then
-	    IFS='[]: ' read a b left c n1 d right n2 e <<<"$ln"
-	    echo "[$right]($left#L$n1)"
+	    IFS='[]: ' read colon1 emptya emptyb filepath emptyc n1 emptyd label emptye n2 rest <<<"$ln"
+	    [ "$emptya$emptyb$emptyc$emptyd$emptye" != "" ] && echo "bug"
+	    echo "[$label]($filepath#L$n1)"
 	else
 	    printf "%s\n" "$pref$ln"
 	fi
