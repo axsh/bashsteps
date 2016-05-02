@@ -479,12 +479,33 @@ orglink_convert()
     done
 }
 
+indent_convert()
+{
+    while true; do
+	pref=""
+	mid=""
+	## read org-mode **... prefixes and convert to markdown headings
+	while IFS= read -n 1 c; do
+	    if [ "$c" = "*" ]; then
+		pref="*$pref"
+		mid="$mid   -- "
+	    else
+		pref="$pref$c"
+		break
+	    fi
+	done
+	IFS= IFS=' :-' read -r xx index ln || break
+	printf "%-7s, %-10s %s %s\n" "$pref" "$index" "$mid" "$ln"
+    done
+}
+
 cmdline=( )
 bashxoption=""
 export verboseoption=false
 export markdownoption=false
 export orglinkoption=false
 export linesoption=false
+export indentoption=false
 export reldir="$(pwd)"
 parse-parameters()
 {
@@ -531,6 +552,9 @@ parse-parameters()
 		;;
 	    lines | links)
 		linesoption=true
+		;;
+	    indent)
+		indentoption=true
 		;;
 	    *)
 		cmdline=( "${cmdline[@]}" "$1" )
@@ -603,10 +627,17 @@ bashctrl-main()
 	source_lineinfo_output() { : ; }
     fi
 
+    # basic formatting is, e.g.: *** : 1.1-Make t-fff (not done)
+    # so main delimiters are : and -
+    # IFS=' :-' read orgpref index rest
+    # links formatting adds: ::   [[./examples/new/new-duped-substep.sh::17][new-duped-substep.sh::17]]
+
     if $markdownoption; then
 	$bashxoption "${cmdline[@]}" | markdown_convert
     elif $orglinkoption; then
 	$bashxoption "${cmdline[@]}" | orglink_convert
+    elif $indentoption; then
+	$bashxoption "${cmdline[@]}" | indent_convert
     else
 	$bashxoption "${cmdline[@]}"
     fi
