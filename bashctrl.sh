@@ -523,6 +523,7 @@ parse-parameters()
 		markdownoption=true
 		;;
 	    orglink*)
+		linesoption=true
 		orglinkoption=true
 		;;
 	    abs* | abspath)
