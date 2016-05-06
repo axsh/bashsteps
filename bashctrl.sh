@@ -177,7 +177,7 @@ optimized-actions-with-terse-output-definitions()
 	export group_title="${BASHCTRL_INDEX%.yyy}.0-$*"
 	( set +x
 	  outline_header_at_depth "$BASHCTRL_DEPTH"
-	  echo "(($group_title))" )
+	  echo "$group_title :::" )
 	(( BASHCTRL_DEPTH++ ))
 	source_lineinfo_collect
 	source_lineinfo_output
@@ -495,7 +495,7 @@ indent_convert()
 	    fi
 	done
 	IFS= IFS=' :-' read -r xx index ln || break
-	printf "%-7s, %-10s %s %s\n" "$pref" "$index" "$mid" "$ln"
+	printf "%-5s %-5s %s %s\n" "$pref" "$mid" "$index" "$ln"
     done
 }
 
