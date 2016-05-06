@@ -488,14 +488,14 @@ indent_convert()
 	while IFS= read -n 1 c; do
 	    if [ "$c" = "*" ]; then
 		pref="*$pref"
-		mid="$mid   -- "
+		[ "$pref" = '*' ] || [ "$pref" = '**' ] || mid="$mid  --  "
 	    else
 		pref="$pref$c"
 		break
 	    fi
 	done
 	IFS= IFS=' :-' read -r xx index ln || break
-	printf "%-5s %-5s %s %s\n" "$pref" "$mid" "$index" "$ln"
+	printf "%-5s %s %s %s\n" "$pref" "$mid" "$index" "$ln"
     done
 }
 
