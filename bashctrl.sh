@@ -216,7 +216,7 @@ outline_header_at_depth()
     for (( i = 0; i <= depth; i++ )); do
 	echo -n "*"
     done
-    echo -n " : "
+    echo -n "  "
 }
 export -f outline_header_at_depth
 
@@ -462,11 +462,12 @@ orglink_convert()
 	    fi
 	done
 	if [[ "$pref" == *\# ]]; then
+	    echo ,,,,,,,,,,,why
 	    echo
 	    prefs=$'\n'"$prefs"
 	fi
 	IFS= read -r ln || break
-	echo ">>>$ln"
+#	echo ">>>$ln"
 	## link line is of the form:  ":  [[file::line#][label::line#]]"
 	if [[ "$ln" == *$pat* ]]; then
 	    IFS='[]: ' read colon1 emptya emptyb filepath emptyc n1 emptyd label emptye n2 rest <<<"$ln"
