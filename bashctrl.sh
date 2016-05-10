@@ -472,7 +472,9 @@ orglink_convert()
 	if [[ "$ln" == *$pat* ]]; then
 	    IFS='[]: ' read colon1 emptya emptyb filepath emptyc n1 emptyd label emptye n2 rest <<<"$ln"
 	    [ "$emptya$emptyb$emptyc$emptyd$emptye" != "" ] && echo "bug"
-	    echo "$savepref [[$filepath::$n1][$saveline]]"
+	    IFS=':' read mid rest <<<"$saveline"
+	    IFS=' ' read index rest2 <<<"$rest"
+	    echo "$savepref $mid[[$filepath::$n1][$index]] $rest2"
 	    saveline="XXX"
 	else
 	    savepref="$pref"
@@ -644,7 +646,6 @@ bashctrl-main()
 	$bashxoption "${cmdline[@]}" | markdown_convert
     elif $indentoption && $orglinkoption; then
 	$bashxoption "${cmdline[@]}" | indent_convert | orglink_convert
-	echo end
     elif $indentoption; then
 	$bashxoption "${cmdline[@]}" | indent_convert
     elif $orglinkoption; then
