@@ -216,7 +216,7 @@ outline_header_at_depth()
     for (( i = 0; i <= depth; i++ )); do
 	echo -n "*"
     done
-    echo -n "  "
+    echo -n " : "
 }
 export -f outline_header_at_depth
 
@@ -503,7 +503,7 @@ indent_convert()
 	    fi
 	done
 	IFS= IFS=' :-' read -r xx index ln || break
-	printf "%-5s %s %s %s\n" "$pref" "$mid" "$index" "$ln"
+	printf "%-5s %s %s %s\n" "$pref" "$mid" ": $index" "$ln"
     done
 }
 
