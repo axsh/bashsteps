@@ -491,6 +491,12 @@ indent_convert()
 		pref="*$pref"
 		[ "$pref" = '*' ] || [ "$pref" = '**' ] || mid="$mid  --  "
 	    else
+		if [ "$pref" = "" ]; then
+		    # it is not an org-mode line, probably a link line
+		    IFS= read -r rest
+		    printf "%s%s\n" "$c" "$rest"
+		    continue
+		fi
 		pref="$pref$c"
 		break
 	    fi
