@@ -466,6 +466,7 @@ orglink_convert()
 	    prefs=$'\n'"$prefs"
 	fi
 	IFS= read -r ln || break
+	echo ">>>$ln"
 	## link line is of the form:  ":  [[file::line#][label::line#]]"
 	if [[ "$ln" == *$pat* ]]; then
 	    IFS='[]: ' read colon1 emptya emptyb filepath emptyc n1 emptyd label emptye n2 rest <<<"$ln"
@@ -634,10 +635,13 @@ bashctrl-main()
 
     if $markdownoption; then
 	$bashxoption "${cmdline[@]}" | markdown_convert
-    elif $orglinkoption; then
-	$bashxoption "${cmdline[@]}" | orglink_convert
+    elif $indentoption && $orglinkoption; then
+	$bashxoption "${cmdline[@]}" | indent_convert | orglink_convert
+	echo end
     elif $indentoption; then
 	$bashxoption "${cmdline[@]}" | indent_convert
+    elif $orglinkoption; then
+	$bashxoption "${cmdline[@]}" | orglink_convert
     else
 	$bashxoption "${cmdline[@]}"
     fi
