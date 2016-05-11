@@ -483,6 +483,44 @@ orglink_convert()
     done
 }
 
+mdlink_convert() # almost exact copy of orglink_convert()
+{
+    saveline="XXX"
+    pat=']['
+    while true; do
+	pref=""
+	## read org-mode **... prefixes and convert to markdown headings
+	while IFS= read -n 1 c; do
+	    if [ "$c" = "*" ]; then
+		pref="*$pref"
+	    else
+		pref="$pref$c"
+		break
+	    fi
+	done
+	if [[ "$pref" == *\# ]]; then
+	    echo ,,,,,,,,,,,why
+	    echo
+	    prefs=$'\n'"$prefs"
+	fi
+	IFS= read -r ln || break
+#	echo ">>>$ln"
+	## link line is of the form:  ":  [[file::line#][label::line#]]"
+	if [[ "$ln" == *$pat* ]]; then
+	    IFS='[]: ' read colon1 emptya emptyb filepath emptyc n1 emptyd label emptye n2 rest <<<"$ln"
+	    [ "$emptya$emptyb$emptyc$emptyd$emptye" != "" ] && echo "bug"
+	    IFS=':' read mid rest <<<"$saveline"
+	    IFS=' ' read index rest2 <<<"$rest"
+	    echo "$savepref $mid[$index]($filepath#L$n1) $rest2"
+	    echo
+	    saveline="XXX"
+	else
+	    savepref="$pref"
+	    saveline="$(printf "%s\n" "$ln")"
+	fi
+    done
+}
+
 indent_convert()
 {
     while true; do
@@ -514,6 +552,7 @@ bashxoption=""
 export verboseoption=false
 export markdownoption=false
 export orglinkoption=false
+export mdlinkoption=false
 export linesoption=false
 export indentoption=false
 export reldir="$(pwd)"
@@ -556,6 +595,10 @@ parse-parameters()
 	    orglink*)
 		linesoption=true
 		orglinkoption=true
+		;;
+	    mdlink*)
+		linesoption=true
+		mdlinkoption=true
 		;;
 	    abs* | abspath)
 		reldir=""
@@ -646,10 +689,14 @@ bashctrl-main()
 	$bashxoption "${cmdline[@]}" | markdown_convert
     elif $indentoption && $orglinkoption; then
 	$bashxoption "${cmdline[@]}" | indent_convert | orglink_convert
+    elif $indentoption && $mdlinkoption; then
+	$bashxoption "${cmdline[@]}" | indent_convert | mdlink_convert
     elif $indentoption; then
 	$bashxoption "${cmdline[@]}" | indent_convert
     elif $orglinkoption; then
 	$bashxoption "${cmdline[@]}" | orglink_convert
+    elif $mdlinkoption; then
+	$bashxoption "${cmdline[@]}" | mdlink_convert
     else
 	$bashxoption "${cmdline[@]}"
     fi
