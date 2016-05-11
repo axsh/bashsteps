@@ -543,7 +543,7 @@ indent_convert()
 	    fi
 	done
 	IFS= IFS=' :-' read -r xx index ln || break
-	printf "%-5s %s %s %s\n" "$pref" "$mid" ": $index" "$ln"
+	printf "%-7s %s %s %s\n" "$pref" "$mid" ": $index" "$ln"
     done
 }
 
