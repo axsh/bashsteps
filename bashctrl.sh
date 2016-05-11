@@ -29,7 +29,7 @@ helper-function-definitions()
     export -f prev_cmd_failed
 
     # for consistency, start to use the variable form for everything
-    ${prev_cmd_failed='eval [ $? = 0 ] || exit 255'}
+    : ${prev_cmd_failed:='eval [ $? = 0 ] || exit 255'}
     export prev_cmd_failed
 }
     
