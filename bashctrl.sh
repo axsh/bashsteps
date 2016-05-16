@@ -430,10 +430,6 @@ markdown_convert()
 		break
 	    fi
 	done
-	if [[ "$pref" == *\# ]]; then
-	    echo
-	    prefs=$'\n'"$prefs"
-	fi
 	IFS= read -r ln || break
 	## link line is of the form:  ":  [[file::line#][label::line#]]"
 	if [[ "$ln" == *$pat* ]]; then
@@ -461,11 +457,6 @@ orglink_convert()
 		break
 	    fi
 	done
-	if [[ "$pref" == *\# ]]; then
-	    echo ,,,,,,,,,,,why
-	    echo
-	    prefs=$'\n'"$prefs"
-	fi
 	IFS= read -r ln || break
 #	echo ">>>$ln"
 	## link line is of the form:  ":  [[file::line#][label::line#]]"
@@ -499,11 +490,6 @@ mdlink_convert() # almost exact copy of orglink_convert()
 		break
 	    fi
 	done
-	if [[ "$pref" == *\# ]]; then
-	    echo ,,,,,,,,,,,why
-	    echo
-	    prefs=$'\n'"$prefs"
-	fi
 	IFS= read -r ln || break
 #	echo ">>>$ln"
 	## link line is of the form:  ":  [[file::line#][label::line#]]"
