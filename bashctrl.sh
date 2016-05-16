@@ -476,7 +476,6 @@ orglink_convert()
 
 mdlink_convert() # almost exact copy of orglink_convert()
 {
-    echo "<br>"
     saveline="XXX"
     pat=']['
     while true; do
@@ -491,7 +490,6 @@ mdlink_convert() # almost exact copy of orglink_convert()
 	    fi
 	done
 	IFS= read -r ln || break
-#	echo ">>>$ln"
 	## link line is of the form:  ":  [[file::line#][label::line#]]"
 	if [[ "$ln" == *$pat* ]]; then
 	    IFS='[]: ' read colon1 emptya emptyb filepath emptyc n1 emptyd label emptye n2 rest <<<"$ln"
@@ -609,6 +607,7 @@ parse-parameters()
     done
 }
 
+theheading=""
 bashctrl-main()
 {
     parse-parameters "$@"
@@ -619,20 +618,20 @@ bashctrl-main()
 	in-order | debug)
 	    helper-function-definitions
 	    optimized-actions-with-terse-output-definitions
-	    echo "* An in-order list of steps with bash nesting info.  No attempt to show hierarchy:"
+	    theheading="* An in-order list of steps with bash nesting info.  No attempt to show hierarchy:"
 	    dump1-definitions
 	    ;;
 	quick)
 	    helper-function-definitions
 	    optimized-actions-with-terse-output-definitions
-	    echo "* An in-order list of steps with bash nesting info.  No evaluation of status checks."
+	    theheading="* An in-order list of steps with bash nesting info.  No evaluation of status checks."
 	    quick-definitions
 	    ;;
 	status-all | status)
 	    helper-function-definitions
 	    optimized-actions-with-terse-output-definitions
 	    status-definitions
-	    echo "* Status of all steps in dependency hierarchy with no pruning"
+	    theheading="* Status of all steps in dependency hierarchy with no pruning"
 	    ;;
 	status1)
 	    helper-function-definitions
@@ -680,8 +679,10 @@ bashctrl-main()
     if $markdownoption; then
 	$bashxoption "${cmdline[@]}" | markdown_convert
     elif $indentoption && $orglinkoption; then
+	echo "$theheading"
 	$bashxoption "${cmdline[@]}" | indent_convert | orglink_convert
     elif $indentoption && $mdlinkoption; then
+	echo "<code>$theheading</code><br>"
 	$bashxoption "${cmdline[@]}" | indent_convert | mdlink_convert
     elif $indentoption; then
 	$bashxoption "${cmdline[@]}" | indent_convert
@@ -690,6 +691,7 @@ bashctrl-main()
     elif $mdlinkoption; then
 	$bashxoption "${cmdline[@]}" | mdlink_convert
     else
+	echo "$theheading"
 	$bashxoption "${cmdline[@]}"
     fi
 }
