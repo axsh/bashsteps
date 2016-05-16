@@ -496,7 +496,7 @@ mdlink_convert() # almost exact copy of orglink_convert()
 	    [ "$emptya$emptyb$emptyc$emptyd$emptye" != "" ] && echo "bug"
 	    IFS=':' read mid rest <<<"$saveline"
 	    IFS=' ' read index rest2 <<<"$rest"
-	    htmllink_part="<a href=\"$filepath#L$n1\">$index $rest2</a>"
+	    htmllink_part="<a href=\"$rel_md_link/$filepath#L$n1\">$index $rest2</a>"
 	    markdown_output="<code>$savepref $mid${htmllink_part}</code><br>"
 	    # use non-breaking spaces so indentation will look OK
 	    # (Maybe github strips them out?  Maybe <code> strips them out?  Not sure.)
@@ -684,11 +684,11 @@ bashctrl-main()
     elif $indentoption && $mdlinkoption; then
 	commithash="$(git log -1 --pretty=format:%H)"
 	commitlink="../../tree/$commithash/"
+	export rel_md_link="../../blob/$commithash"
 	anchor="<a href=\"$commitlink\">$commitlink</a>"
 	# The following **does not** quite work, because the map file is
 	# in the commit *after* $commitlink.
-	echo "In order to make sure the links match the code version, browse"
-	echo "the map from this commit: $anchor"
+	echo "The map was made from this tree: $anchor"
 	echo "<br>"
 	echo "<code>$theheading</code><br>"
 	$bashxoption "${cmdline[@]}" | indent_convert | mdlink_convert
