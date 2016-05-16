@@ -485,6 +485,7 @@ orglink_convert()
 
 mdlink_convert() # almost exact copy of orglink_convert()
 {
+    echo "<br>"
     saveline="XXX"
     pat=']['
     while true; do
@@ -492,7 +493,7 @@ mdlink_convert() # almost exact copy of orglink_convert()
 	## read org-mode **... prefixes and convert to markdown headings
 	while IFS= read -n 1 c; do
 	    if [ "$c" = "*" ]; then
-		pref="*$pref"
+		pref="&#42;$pref"   # &#42; for html asterisk
 	    else
 		pref="$pref$c"
 		break
@@ -511,8 +512,13 @@ mdlink_convert() # almost exact copy of orglink_convert()
 	    [ "$emptya$emptyb$emptyc$emptyd$emptye" != "" ] && echo "bug"
 	    IFS=':' read mid rest <<<"$saveline"
 	    IFS=' ' read index rest2 <<<"$rest"
-	    echo "$savepref $mid[$index]($filepath#L$n1) $rest2"
-	    echo
+	    htmllink_part="<a href=\"$filepath#L$n1\">$index</a>"
+	    markdown_output="<code>$savepref $mid${htmllink_part} $rest2</code><br>"
+	    # use non-breaking spaces so indentation will look OK
+	    # (Maybe github strips them out?  Maybe <code> strips them out?  Not sure.)
+	    subs_nbsp="${markdown_output// /&nbsp;}"
+	    final_markdown="${subs_nbsp//<a&nbsp;/<a }" # but not the space inside the anchor tag!
+	    echo "$final_markdown"
 	    saveline="XXX"
 	else
 	    savepref="$pref"
