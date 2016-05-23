@@ -1,6 +1,6 @@
 # For more documentation and a wrapper script that adds more
 # functionality, refer to the following repository:
-# https://github.com/triggers/bashsteps
+# https://github.com/axsh/bashsteps
 
 # Sourcing this code defines and exports the following:
 #   $starting_step
