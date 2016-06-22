@@ -478,6 +478,27 @@ orglink_convert()
     done
 }
 
+make_sure_filepath_is_in_repository()
+{
+    out="$(git ls-files "$filepath")"
+    [ "$out" != "" ] && return 0
+
+    # try to find the same file somewhere in the repository
+    orgmd5="$(md5sum "$filepath")"
+    orgmd5="${orgmd5:0:32}"
+
+    alternatives="$(find ./  -name "${filepath##*/}")"
+    while IFS= read -r ln; do
+	out="$(git ls-files "$ln")"
+	[ "$out" = "" ] && continue
+	md5="$(md5sum "$ln")"
+	[ "$orgmd5" != "${md5:0:32}" ] && continue
+
+	filepath="$ln" # found a match visible on github
+	break
+    done <<<"$alternatives"
+}
+
 mdlink_convert() # almost exact copy of orglink_convert()
 {
     saveline="XXX"
@@ -497,6 +518,7 @@ mdlink_convert() # almost exact copy of orglink_convert()
 	## link line is of the form:  ":  [[file::line#][label::line#]]"
 	if [[ "$ln" == *$pat* ]]; then
 	    IFS='[]: ' read colon1 emptya emptyb filepath emptyc n1 emptyd label emptye n2 rest <<<"$ln"
+	    make_sure_filepath_is_in_repository
 	    [ "$emptya$emptyb$emptyc$emptyd$emptye" != "" ] && echo "bug"
 	    IFS=':' read mid rest <<<"$saveline"
 	    IFS=' ' read index rest2 <<<"$rest"
@@ -595,14 +617,15 @@ parse-parameters()
 		mdlinkoption=true
 		;;
 	    orgmode | org-mode)
-		# This work pretty good:  ./bashctrl.sh ./buildscript.sh status orgmode >mapname.org
+		# This works pretty good:  ./bashctrl.sh ./buildscript.sh status orgmode >mapname.org
 		linesoption=true  # output original file/line# info
 		indentoption=true # pipe through indent_convert()
 		orglinkoption=true # pipe through orglink_convert()
 		;;
 	    markdown)
-		# This work sort of OK:  ./bashctrl.sh ./buildscript.sh status markdown >mapname.md
-		# problem 1: scripts copied elsewhere before use, e.g. kvm-boot.sh
+		[ -d .git ] || \
+		    reportfailed "markdown option should only be used at the root of a git repository"
+		# This works OK:  ./bashctrl.sh ./buildscript.sh status markdown >mapname.md
 		linesoption=true  # output original file/line# info
 		indentoption=true # pipe through indent_convert()
 		mdlinkoption=true # pipe through mdlink_convert()
