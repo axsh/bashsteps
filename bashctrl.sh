@@ -590,6 +590,12 @@ parse-parameters()
 		linesoption=true
 		mdlinkoption=true
 		;;
+	    orgmode | org-mode)
+		# This work pretty good:  ./bashctrl.sh ./buildscript.sh status orgmode >mapname.org
+		linesoption=true  # output original file/line# info
+		indentoption=true # pipe through indent_convert()
+		orglinkoption=true # pipe through orglink_convert()
+		;;
 	    markdown)
 		# This work sort of OK:  ./bashctrl.sh ./buildscript.sh status markdown >mapname.md
 		# problem 1: scripts invoked via softlinks
