@@ -579,7 +579,7 @@ parse-parameters()
 	    verbose)
 		verboseoption=true
 		;;
-	    markdown)
+	    old-markdown)
 		markdownoption=true
 		;;
 	    orglink*)
@@ -589,6 +589,14 @@ parse-parameters()
 	    mdlink*)
 		linesoption=true
 		mdlinkoption=true
+		;;
+	    markdown)
+		# This work sort of OK:  ./bashctrl.sh ./buildscript.sh status markdown >mapname.md
+		# problem 1: scripts invoked via softlinks
+		# problem 2: scripts copied elsewhere before use, e.g. kvm-boot.sh
+		linesoption=true  # output original file/line# info
+		indentoption=true # pipe through indent_convert()
+		mdlinkoption=true # pipe through mdlink_convert()
 		;;
 	    abs* | abspath)
 		reldir=""
