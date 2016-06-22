@@ -18,8 +18,12 @@ source_lineinfo_collect()
 #    echo BASH_SOURCE="${BASH_SOURCE[*]}"
 #    echo BASH_LINENO="${BASH_LINENO[*]}"
 #    echo ==============================
-#    source_lineinfo="::::::::::${BASH_LINENO[1]}:${BASH_SOURCE[index]}:${FUNCNAME[2]}"
-    fullsource="${BASH_SOURCE[index]}::${BASH_LINENO[1]}"
+    #    source_lineinfo="::::::::::${BASH_LINENO[1]}:${BASH_SOURCE[index]}:${FUNCNAME[2]}"
+    apath="${BASH_SOURCE[index]}"
+    nolinks="$(readlink -f "$apath")" # necessary because github does not follow symbolic links
+    fullsource="$nolinks::${BASH_LINENO[1]}"
+    echo "$fullsource" >>/tmp/yy2
+    
     if [ "$reldir" != "" ] ; then
 	usedsource="${fullsource#${reldir%/}}"
 	[ "$fullsource" != "$usedsource" ] && usedsource=".$usedsource"
@@ -598,8 +602,7 @@ parse-parameters()
 		;;
 	    markdown)
 		# This work sort of OK:  ./bashctrl.sh ./buildscript.sh status markdown >mapname.md
-		# problem 1: scripts invoked via softlinks
-		# problem 2: scripts copied elsewhere before use, e.g. kvm-boot.sh
+		# problem 1: scripts copied elsewhere before use, e.g. kvm-boot.sh
 		linesoption=true  # output original file/line# info
 		indentoption=true # pipe through indent_convert()
 		mdlinkoption=true # pipe through mdlink_convert()
