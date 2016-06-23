@@ -84,9 +84,10 @@ export CODEDIR="$LINKCODEDIR" # backwards compatibility
 
 # Other scripts check if the first character is "/" to see if it has
 # properly been set to an absolute path. So this default setting does
-# not to indicate that it is not really set and some other script
-# should overwrite it.  [ "$DATADIR" = "" ] && export
-# DATADIR="bug/the-main-script-should-have-set-DATADIR"
+# not to indicate that it is not really set. It means the main
+# (independent) script should overwrite it.
+
+[ "$DATADIR" = "" ] && export DATADIR="bug/the-main-script-should-have-set-DATADIR"
 
 # Put the current directory somewhere unwritable to force use
 # of the above variables.
