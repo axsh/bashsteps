@@ -7,6 +7,38 @@ reportfailed()
 }
 export -f reportfailed
 
+source_lineinfo_collect()
+{
+    index="$1"
+    : ${index:=2}
+    oifs="$IFS"
+    IFS=,
+#    echo ------------------------------
+#    echo FUNCNAME="${FUNCNAME[*]}"
+#    echo BASH_SOURCE="${BASH_SOURCE[*]}"
+#    echo BASH_LINENO="${BASH_LINENO[*]}"
+#    echo ==============================
+    #    source_lineinfo="::::::::::${BASH_LINENO[1]}:${BASH_SOURCE[index]}:${FUNCNAME[2]}"
+    apath="${BASH_SOURCE[index]}"
+    nolinks="$(readlink -f "$apath")" # necessary because github does not follow symbolic links
+    fullsource="$nolinks::${BASH_LINENO[1]}"
+    echo "$fullsource" >>/tmp/yy2
+    
+    if [ "$reldir" != "" ] ; then
+	usedsource="${fullsource#${reldir%/}}"
+	[ "$fullsource" != "$usedsource" ] && usedsource=".$usedsource"
+    else
+	usedsource="$fullsource"
+    fi
+    source_lineinfo="$(printf "%10s[[%s][%s]]\n" "" "$usedsource" "${fullsource##*/}")"
+    IFS="$oifs"
+}
+source_lineinfo_output()
+{
+    echo ":: $source_lineinfo"
+}
+export -f source_lineinfo_collect
+export -f source_lineinfo_output
 
 # The following variables are used to set bashsteps hooks, which are
 # used to control and debug bash scripts that use the bashsteps
@@ -89,6 +121,7 @@ optimized-actions-with-terse-output-definitions()
 	# because that hook is required and all code between this hook
 	# and the "skip_step" hook must execute without side effects
 	# or terminating errors.
+	source_lineinfo_collect
 	parents=""
 	[[ "$BASHCTRL_INDEX" == *.* ]] && parents="${BASHCTRL_INDEX%.*}".
 	read nextcount <&78
@@ -114,14 +147,16 @@ optimized-actions-with-terse-output-definitions()
 	      outline_header_at_depth "$BASHCTRL_DEPTH"
 	    )
 	    echo "Skipping step: $step_title"
+	    source_lineinfo_output
 	    step_title=""
 	    exit 0 # i.e. skip (without error) to end of process/step
 	else
 	    ( set +x
 	      echo
 	      outline_header_at_depth "$BASHCTRL_DEPTH"
-	      echo "DOING STEP: $step_title"
 	    )
+	    echo "DOING STEP: $step_title"
+	    source_lineinfo_output
 	    step_title=""
 	    $verboseoption && set -x
 	fi
@@ -146,8 +181,10 @@ optimized-actions-with-terse-output-definitions()
 	export group_title="${BASHCTRL_INDEX%.yyy}.0-$*"
 	( set +x
 	  outline_header_at_depth "$BASHCTRL_DEPTH"
-	  echo "[[$group_title]]" )
+	  echo "$group_title :::" )
 	(( BASHCTRL_DEPTH++ ))
+	source_lineinfo_collect
+	source_lineinfo_output
     }
     export -f remember_and_output_group_title_in_outline
 
@@ -186,6 +223,18 @@ outline_header_at_depth()
     echo -n " : "
 }
 export -f outline_header_at_depth
+
+outputlineinfo()
+{
+    echo "${BASH_SOURCE[*]}",,,sss-"${#BASH_SOURCE[*]}"
+    echo "$(caller 0),,,ccc 0"
+    echo "$(caller 1),,,ccc 1"
+    echo "$(caller 2),,,ccc 2"
+    echo "${BASH_LINENO[*]}",,,LLL-"${#BASH_LINENO[*]}"
+    echo "${FUNCNAME[*]}",,,LLL-"${#FUNCNAME[*]}"
+    echo "$LINENO"'<<-LINENO'
+}
+export -f outputlineinfo
 
 dump1-definitions()
 {
@@ -236,6 +285,7 @@ quick-definitions()
 	  outline_header_at_depth "$BASHCTRL_DEPTH"
 	  echo "$step_title" )
 	read debugcount <&88
+	outputlineinfo
 	(( debugcount > 8 )) && exit 0
 	exit 0 # Move on to next step!
     }
@@ -271,7 +321,7 @@ status-definitions()
     export skip_whole_tree=''
     skip_group_if_unnecessary='eval (( $? == 0 )) && skip_whole_tree=,skippable'
     
-    status_skip_step()
+    status_skip_step() # for skip_step_if_already_done
     {
 	rc="$?"
 	set +x
@@ -284,6 +334,7 @@ status-definitions()
 	    echo " (not done$skip_whole_tree)"
 	    step_title=""
 	fi
+	source_lineinfo_output
 	exit 0 # Always, because we are just checking status
     }
     export -f status_skip_step
@@ -368,10 +419,159 @@ glob_heuristics()
     fi
 }
 
+
+markdown_convert()
+{
+    pat=']['
+    while true; do
+	pref=""
+	## read org-mode **... prefixes and convert to markdown headings
+	while IFS= read -n 1 c; do
+	    if [ "$c" = "*" ]; then
+		pref="#$pref"
+	    else
+		pref="$c$pref"
+		break
+	    fi
+	done
+	IFS= read -r ln || break
+	## link line is of the form:  ":  [[file::line#][label::line#]]"
+	if [[ "$ln" == *$pat* ]]; then
+	    IFS='[]: ' read colon1 emptya emptyb filepath emptyc n1 emptyd label emptye n2 rest <<<"$ln"
+	    [ "$emptya$emptyb$emptyc$emptyd$emptye" != "" ] && echo "bug"
+	    echo "[$label]($filepath#L$n1)"
+	else
+	    printf "%s\n" "$pref$ln"
+	fi
+    done
+}
+
+orglink_convert()
+{
+    saveline="XXX"
+    pat=']['
+    while true; do
+	pref=""
+	## read org-mode **... prefixes and convert to markdown headings
+	while IFS= read -n 1 c; do
+	    if [ "$c" = "*" ]; then
+		pref="*$pref"
+	    else
+		pref="$pref$c"
+		break
+	    fi
+	done
+	IFS= read -r ln || break
+#	echo ">>>$ln"
+	## link line is of the form:  ":  [[file::line#][label::line#]]"
+	if [[ "$ln" == *$pat* ]]; then
+	    IFS='[]: ' read colon1 emptya emptyb filepath emptyc n1 emptyd label emptye n2 rest <<<"$ln"
+	    [ "$emptya$emptyb$emptyc$emptyd$emptye" != "" ] && echo "bug"
+	    IFS=':' read mid rest <<<"$saveline"
+	    IFS=' ' read index rest2 <<<"$rest"
+	    echo "$savepref $mid[[$filepath::$n1][$index]] $rest2"
+	    saveline="XXX"
+	else
+	    savepref="$pref"
+	    saveline="$(printf "%s\n" "$ln")"
+	fi
+    done
+}
+
+make_sure_filepath_is_in_repository()
+{
+    out="$(git ls-files "$filepath")"
+    [ "$out" != "" ] && return 0
+
+    # try to find the same file somewhere in the repository
+    orgmd5="$(md5sum "$filepath")"
+    orgmd5="${orgmd5:0:32}"
+
+    alternatives="$(find ./  -name "${filepath##*/}")"
+    while IFS= read -r ln; do
+	out="$(git ls-files "$ln")"
+	[ "$out" = "" ] && continue
+	md5="$(md5sum "$ln")"
+	[ "$orgmd5" != "${md5:0:32}" ] && continue
+
+	filepath="$ln" # found a match visible on github
+	break
+    done <<<"$alternatives"
+}
+
+mdlink_convert() # almost exact copy of orglink_convert()
+{
+    saveline="XXX"
+    pat=']['
+    while true; do
+	pref=""
+	## read org-mode **... prefixes and convert to markdown headings
+	while IFS= read -n 1 c; do
+	    if [ "$c" = "*" ]; then
+		pref="&#42;$pref"   # &#42; for html asterisk
+	    else
+		pref="$pref$c"
+		break
+	    fi
+	done
+	IFS= read -r ln || break
+	## link line is of the form:  ":  [[file::line#][label::line#]]"
+	if [[ "$ln" == *$pat* ]]; then
+	    IFS='[]: ' read colon1 emptya emptyb filepath emptyc n1 emptyd label emptye n2 rest <<<"$ln"
+	    make_sure_filepath_is_in_repository
+	    [ "$emptya$emptyb$emptyc$emptyd$emptye" != "" ] && echo "bug"
+	    IFS=':' read mid rest <<<"$saveline"
+	    IFS=' ' read index rest2 <<<"$rest"
+	    htmllink_part="<a href=\"$rel_md_link/$filepath#L$n1\">$index $rest2</a>"
+	    markdown_output="<code>$savepref $mid${htmllink_part}</code><br>"
+	    # use non-breaking spaces so indentation will look OK
+	    # (Maybe github strips them out?  Maybe <code> strips them out?  Not sure.)
+	    subs_nbsp="${markdown_output// /&nbsp;}"
+	    final_markdown="${subs_nbsp//<a&nbsp;/<a }" # but not the space inside the anchor tag!
+	    echo "$final_markdown"
+	    saveline="XXX"
+	else
+	    savepref="$pref"
+	    saveline="$(printf "%s\n" "$ln")"
+	fi
+    done
+}
+
+indent_convert()
+{
+    while true; do
+	pref=""
+	mid=""
+	## read org-mode **... prefixes and convert to markdown headings
+	while IFS= read -n 1 c; do
+	    if [ "$c" = "*" ]; then
+		pref="*$pref"
+		[ "$pref" = '*' ] || [ "$pref" = '**' ] || mid="$mid  --  "
+	    else
+		if [ "$pref" = "" ]; then
+		    # it is not an org-mode line, probably a link line
+		    IFS= read -r rest
+		    printf "%s%s\n" "$c" "$rest"
+		    continue
+		fi
+		pref="$pref$c"
+		break
+	    fi
+	done
+	IFS= IFS=' :-' read -r xx index ln || break
+	printf "%-7s %s %s %s\n" "$pref" "$mid" ": $index" "$ln"
+    done
+}
+
 cmdline=( )
-usetac=false
 bashxoption=""
 export verboseoption=false
+export markdownoption=false
+export orglinkoption=false
+export mdlinkoption=false
+export linesoption=false
+export indentoption=false
+export reldir="$(pwd)"
 parse-parameters()
 {
     while [ "$#" -gt 0 ]; do
@@ -405,6 +605,40 @@ parse-parameters()
 	    verbose)
 		verboseoption=true
 		;;
+	    old-markdown)
+		markdownoption=true
+		;;
+	    orglink*)
+		linesoption=true
+		orglinkoption=true
+		;;
+	    mdlink*)
+		linesoption=true
+		mdlinkoption=true
+		;;
+	    orgmode | org-mode)
+		# This works pretty good:  ./bashctrl.sh ./buildscript.sh status orgmode >mapname.org
+		linesoption=true  # output original file/line# info
+		indentoption=true # pipe through indent_convert()
+		orglinkoption=true # pipe through orglink_convert()
+		;;
+	    markdown)
+		[ -d .git ] || \
+		    reportfailed "markdown option should only be used at the root of a git repository"
+		# This works OK:  ./bashctrl.sh ./buildscript.sh status markdown >mapname.md
+		linesoption=true  # output original file/line# info
+		indentoption=true # pipe through indent_convert()
+		mdlinkoption=true # pipe through mdlink_convert()
+		;;
+	    abs* | abspath)
+		reldir=""
+		;;
+	    lines | links)
+		linesoption=true
+		;;
+	    indent)
+		indentoption=true
+		;;
 	    *)
 		cmdline=( "${cmdline[@]}" "$1" )
 		;;
@@ -413,6 +647,7 @@ parse-parameters()
     done
 }
 
+theheading=""
 bashctrl-main()
 {
     parse-parameters "$@"
@@ -423,20 +658,20 @@ bashctrl-main()
 	in-order | debug)
 	    helper-function-definitions
 	    optimized-actions-with-terse-output-definitions
-	    echo "* An in-order list of steps with bash nesting info.  No attempt to show hierarchy:"
+	    theheading="* An in-order list of steps with bash nesting info.  No attempt to show hierarchy:"
 	    dump1-definitions
 	    ;;
 	quick)
 	    helper-function-definitions
 	    optimized-actions-with-terse-output-definitions
-	    echo "* An in-order list of steps with bash nesting info.  No evaluation of status checks."
+	    theheading="* An in-order list of steps with bash nesting info.  No evaluation of status checks."
 	    quick-definitions
 	    ;;
 	status-all | status)
 	    helper-function-definitions
 	    optimized-actions-with-terse-output-definitions
 	    status-definitions
-	    echo "* Status of all steps in dependency hierarchy with no pruning"
+	    theheading="* Status of all steps in dependency hierarchy with no pruning"
 	    ;;
 	status1)
 	    helper-function-definitions
@@ -458,9 +693,53 @@ bashctrl-main()
 	    reportfailed "No command chosen"
 	    ;;
     esac
-    if $usetac; then
-	$bashxoption "${cmdline[@]}" | tac
+
+
+    # make into full path so BASH_SOURCE will have full paths
+    firsttoken="${cmdline[0]}"
+    cmdline[0]="$(readlink -f "$(which "$firsttoken")")"
+
+    if $linesoption; then
+	# if $BASH_SOURCE is referenced from a function that was exported
+	# from a parent shell, it returns (or will soon return) and empty
+	# string.  The following is a workaround to redefine the function
+	# in the current process.
+	export -pf >"/tmp/export-for-bashctrl-$$"
+	export BASH_ENV="/tmp/export-for-bashctrl-$$"
     else
+	source_lineinfo_collect() { : ; }
+	source_lineinfo_output() { : ; }
+    fi
+
+    # basic formatting is, e.g.: *** : 1.1-Make t-fff (not done)
+    # so main delimiters are : and -
+    # IFS=' :-' read orgpref index rest
+    # links formatting adds: ::   [[./examples/new/new-duped-substep.sh::17][new-duped-substep.sh::17]]
+
+    if $markdownoption; then
+	$bashxoption "${cmdline[@]}" | markdown_convert
+    elif $indentoption && $orglinkoption; then
+	echo "$theheading"
+	$bashxoption "${cmdline[@]}" | indent_convert | orglink_convert
+    elif $indentoption && $mdlinkoption; then
+	commithash="$(git log -1 --pretty=format:%H)"
+	commitlink="../../tree/$commithash/"
+	export rel_md_link="../../blob/$commithash"
+	anchor="<a href=\"$commitlink\">$commitlink</a>"
+	# The following **does not** quite work, because the map file is
+	# in the commit *after* $commitlink.
+	echo "The map was made from this tree: $anchor"
+	echo "<br>"
+	echo "<code>$theheading</code><br>"
+	$bashxoption "${cmdline[@]}" | indent_convert | mdlink_convert
+    elif $indentoption; then
+	$bashxoption "${cmdline[@]}" | indent_convert
+    elif $orglinkoption; then
+	$bashxoption "${cmdline[@]}" | orglink_convert
+    elif $mdlinkoption; then
+	$bashxoption "${cmdline[@]}" | mdlink_convert
+    else
+	echo "$theheading"
 	$bashxoption "${cmdline[@]}"
     fi
 }
