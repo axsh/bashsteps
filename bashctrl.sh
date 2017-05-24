@@ -232,7 +232,7 @@ outputlineinfo()
     echo "$(caller 2),,,ccc 2"
     echo "${BASH_LINENO[*]}",,,LLL-"${#BASH_LINENO[*]}"
     echo "${FUNCNAME[*]}",,,LLL-"${#FUNCNAME[*]}"
-    echo "$LINENO"'<<-LINENO'
+    echo "${LINENO}<<-LINENO"
 }
 export -f outputlineinfo
 
