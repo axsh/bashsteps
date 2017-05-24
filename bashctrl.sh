@@ -7,10 +7,18 @@ reportfailed()
 }
 export -f reportfailed
 
+# initialize variables that cause trouble when this script wraps a script that
+# uses set -u
+: ${starting_step_extra_hook:=""}
+export starting_step_extra_hook
+
 source_lineinfo_collect()
 {
-    index="$1"
-    : ${index:=2}
+    if [ "$#" = "0" ]; then # this works even if set -u is enabled
+	index=2
+    else
+	index="$1"
+    fi
     oifs="$IFS"
     IFS=,
 #    echo ------------------------------
