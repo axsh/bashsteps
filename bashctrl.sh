@@ -702,10 +702,20 @@ bashctrl-main()
 	    ;;
     esac
 
+    absolute_path()
+    {
+	if [[ "$1" == /* ]]; then # already absolute path
+	    echo "$1"
+	else  # convert relative to absolute path
+	    echo "$(pwd)/${1#./}"
+	fi
+    }
 
-    # make into full path so BASH_SOURCE will have full paths
+    # Make into full path so BASH_SOURCE will have full paths.
+    # Keep symbolic links in the path so the implicit DATADIR setting
+    # will still work.
     firsttoken="${cmdline[0]}"
-    cmdline[0]="$(readlink -f "$(which "$firsttoken")")"
+    cmdline[0]="$(absolute_path "$firsttoken")"
 
     if $linesoption; then
 	# if $BASH_SOURCE is referenced from a function that was exported
