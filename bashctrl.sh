@@ -593,12 +593,16 @@ parse-parameters()
 	    quick)
 		choosecmd "$1"
 		;;
-	    status-all | status)
+	    status-all | status | check)
 		choosecmd "$1"
 		;;
 	    status1-*)
 		choosecmd "${1%%-*}"
 		export title_glob="$(glob_heuristics "${1#status1-}")"
+		;;
+	    check1-*)
+		choosecmd "${1%%-*}"
+		export title_glob="$(glob_heuristics "${1#check1-}")"
 		;;
 	    [d]o)
 		choosecmd "$1"
@@ -675,13 +679,13 @@ bashctrl-main()
 	    theheading="* An in-order list of steps with bash nesting info.  No evaluation of status checks."
 	    quick-definitions
 	    ;;
-	status-all | status)
+	status-all | status | check)
 	    helper-function-definitions
 	    optimized-actions-with-terse-output-definitions
 	    status-definitions
 	    theheading="* Status of all steps in dependency hierarchy with no pruning"
 	    ;;
-	status1)
+	status1 | check1)
 	    helper-function-definitions
 	    optimized-actions-with-terse-output-definitions
 	    status-definitions
