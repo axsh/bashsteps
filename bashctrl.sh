@@ -27,6 +27,7 @@ source_lineinfo_collect()
 #    echo BASH_LINENO="${BASH_LINENO[*]}"
 #    echo ==============================
     #    source_lineinfo="::::::::::${BASH_LINENO[1]}:${BASH_SOURCE[index]}:${FUNCNAME[2]}"
+    set +u # Give up on set -u if this code path is taken
     apath="${BASH_SOURCE[index]}"
     nolinks="$(readlink -f "$apath")" # necessary because github does not follow symbolic links
     fullsource="$nolinks::${BASH_LINENO[1]}"
@@ -132,7 +133,7 @@ optimized-actions-with-terse-output-definitions()
 	source_lineinfo_collect
 	parents=""
 	[[ "$BASHCTRL_INDEX" == *.* ]] && parents="${BASHCTRL_INDEX%.*}".
-	read nextcount <&78
+	{ exec 2>/dev/null ; read nextcount <&78 || nextcount=1000 ; } 2>/dev/null
 	leafindex="${BASHCTRL_INDEX##*.}"
 	BASHCTRL_INDEX="$parents$nextcount"
 
@@ -182,7 +183,7 @@ optimized-actions-with-terse-output-definitions()
 	# $BASHCTRL_DEPTH.
 	parents=""
 	[[ "$BASHCTRL_INDEX" == *.* ]] && parents="${BASHCTRL_INDEX%.*}".
-	read nextcount <&78
+	{ exec 2>/dev/null ; read nextcount <&78 || nextcount=1000 ; } 2>/dev/null
 	BASHCTRL_INDEX="$parents$nextcount.yyy"
 	exec 78< <(seq 1 1000)
 
@@ -284,7 +285,7 @@ quick-definitions()
 	# $starting_step hook.
 	parents=""
 	[[ "$BASHCTRL_INDEX" == *.* ]] && parents="${BASHCTRL_INDEX%.*}".
-	read nextcount <&78
+	{ exec 2>/dev/null ; read nextcount <&78 || nextcount=1000 ; } 2>/dev/null
 	leafindex="${BASHCTRL_INDEX##*.}"
 	BASHCTRL_INDEX="$parents$nextcount"
 
@@ -359,7 +360,7 @@ filter-definitions()
     {
 	parents=""
 	[[ "$BASHCTRL_INDEX" == *.* ]] && parents="${BASHCTRL_INDEX%.*}".
-	read nextcount <&78
+	{ exec 2>/dev/null ; read nextcount <&78 || nextcount=1000 ; } 2>/dev/null
 	leafindex="${BASHCTRL_INDEX##*.}"
 	BASHCTRL_INDEX="$parents$nextcount"
 
@@ -377,7 +378,7 @@ filter-definitions()
     {
 	parents=""
 	[[ "$BASHCTRL_INDEX" == *.* ]] && parents="${BASHCTRL_INDEX%.*}".
-	read nextcount <&78
+	{ exec 2>/dev/null ; read nextcount <&78 || nextcount=1000 ; } 2>/dev/null
 	BASHCTRL_INDEX="$parents$nextcount.yyy"
 	exec 78< <(seq 1 1000)
     }
@@ -765,5 +766,41 @@ bashctrl-main()
 	$bashxoption "${cmdline[@]}"
     fi
 }
+
+# If one bashsteps script tries to call another remotely,
+# it should do its best to make sure these functions and
+# variables are copied to the remote environment.
+# If a variable's value is a function name, that function
+# should also be automatically copied.
+
+export_variables_for_remote="
+ ${export_variables_for_remote:=}
+	starting_group
+	starting_step
+	skip_step_if_already_done
+	skip_group_if_unnecessary
+	prev_cmd_failed
+	iferr_exit
+	iferr_continue
+	BASHCTRL_INDEX
+	BASHCTRL_DEPTH
+	title_glob
+        starting_step_extra_hook
+        skip_whole_tree
+"
+
+export_funtions_for_remote="
+ ${export_funtions_for_remote:=}
+        outline_header_at_depth
+        source_lineinfo_output
+        source_lineinfo_collect
+	starting_step_extra_hook
+	skip_whole_tree
+	reldir
+	title_glob
+"
+
+export export_variables_for_remote
+export export_funtions_for_remote
 
 bashctrl-main "$@"
