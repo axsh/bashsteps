@@ -787,6 +787,7 @@ export_variables_for_remote="
 	title_glob
         starting_step_extra_hook
         skip_whole_tree
+        verboseoption
 "
 
 export_funtions_for_remote="
