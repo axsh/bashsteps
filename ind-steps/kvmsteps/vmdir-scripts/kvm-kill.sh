@@ -1,11 +1,6 @@
 #!/bin/bash
 
-source "$(dirname $(readlink -f "$0"))/../simple-defaults-for-bashsteps.source"
-
-if [[ "$DATADIR" != /* ]]; then
-    # Choose directory of symbolic link by default
-    DATADIR="$LINKCODEDIR"
-fi
+source "$(dirname $(readlink -f "$0"))/bashsteps-defaults-jan2017-check-and-do.source" || exit
 
 kvm_is_running()
 {
@@ -22,4 +17,4 @@ kvm_is_running()
     marker="$(cat "$DATADIR/runinfo/kvm.marker" 2>/dev/null)"
     env="$(cat /proc/$thepid/environ 2>/dev/null)" && [[ "$env" == *${marker}* ]]
     kill -TERM "$thepid"
-) ; prev_cmd_failed
+) ; $iferr_exit

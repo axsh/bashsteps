@@ -1,0 +1,53 @@
+#!/bin/bash
+
+source "$(dirname $(readlink -f "$0"))/bashsteps-bash-utils-jan2017.source" || exit
+
+new_dir="$1"
+path_to_ubuntu_image="$2"
+OK_not_there="$3"
+
+[[ "$path_to_ubuntu_image" == *tar.gz ]]
+iferr_exit 'Expecting second parameter to be *.tar.gz image file'
+
+[ "$OK_not_there" = "OK" ] || [ -f "$path_to_ubuntu_image" ]
+iferr_exit 'Expecting image file to exist'
+
+eval_iferr_exit 'path_to_ubuntu_image="$(readlink -f "$path_to_ubuntu_image")"'
+
+thisfile="${0##*/}"
+mainscript="${thisfile%-new}"
+
+standard_datadir_setup()
+{
+    ## If this file's name is the main script's filename + "-new", then
+    ## the following lines of code should be reusable:
+    [ "$thisfile" != "$mainscript" ] || iferr_exit 'required filename pattern not followed'
+    [ "$new_dir" != "" ] || iferr_exit "First parameter should be the emacs build directory"
+    [ -d "$new_dir" ] && just_exit "$new_dir already exists"
+    eval_iferr_exit 'mkdir -p "$new_dir"'
+    eval_iferr_exit 'DATADIR="$(readlink -f "$new_dir")"'
+    ln -s "$ORGCODEDIR/$mainscript" "$new_dir" || iferr_exit "ln to $mainscript"
+}
+standard_datadir_setup
+
+(
+    cat  >>"$DATADIR/datadir.conf" <<EOF || reportfailed "datadir.conf init failed"
+: \${KVMMEM:=4096}
+imagesource="$path_to_ubuntu_image"
+EOF
+    # Because vmdirs are sometimes migrated around independently, actually make full copies
+    # of the scripts inside the directory.  Still use symbolic links, because links are
+    # used with a bashsteps experiment for automatically selecting a datadir.
+    (
+	set -e
+	mkdir "$DATADIR/vmdir-scripts"
+	cp "$ORGCODEDIR/vmdir-scripts"/* "$DATADIR/vmdir-scripts"
+	cd "$DATADIR"
+	ln -s "vmdir-scripts"/* "$DATADIR"
+    ) || iferr_exit "links to KVM control scripts"
+    echo "Success"
+) || {
+    # clean up if error
+    rm -fr "$new_dir"
+}
+
