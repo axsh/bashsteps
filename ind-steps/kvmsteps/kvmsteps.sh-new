@@ -6,8 +6,8 @@ new_dir="$1"
 path_to_ubuntu_image="$2"
 OK_not_there="$3"
 
-[[ "$path_to_ubuntu_image" == *tar.gz ]]
-iferr_exit 'Expecting second parameter to be *.tar.gz image file'
+[[ "$path_to_ubuntu_image" == *.tar.gz ]] || [[ "$path_to_ubuntu_image" == *.box ]]
+iferr_exit 'Expecting second parameter to be *.tar.gz or *.box image file'
 
 [ "$OK_not_there" = "OK" ] || [ -f "$path_to_ubuntu_image" ]
 iferr_exit 'Expecting image file to exist'
