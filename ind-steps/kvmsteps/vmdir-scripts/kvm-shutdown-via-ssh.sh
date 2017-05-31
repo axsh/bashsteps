@@ -1,11 +1,6 @@
 #!/bin/bash
 
-source "$(dirname $(readlink -f "$0"))/../simple-defaults-for-bashsteps.source"
-
-if [[ "$DATADIR" != /* ]]; then
-    # Choose directory of symbolic link by default
-    DATADIR="$LINKCODEDIR"
-fi
+source "$(dirname $(readlink -f "$0"))/bashsteps-defaults-jan2017-check-and-do.source" || exit
 
 kvm_is_running()
 {
@@ -13,12 +8,17 @@ kvm_is_running()
 	[ -d /proc/"$(< "$DATADIR/runinfo/kvm.pid")" ]
 }
 
+: ${SSHUSER:=$(cat "$DATADIR/sshuser" 2>/dev/null)}
+
+maybesudo=""
+[ "$SSHUSER" != "root" ] && maybesudo="sudo "
+
 (
-    $starting_step 'Send "sudo shutdown -h now" via ssh'
-    false
+    $starting_step "Send \"${maybesudo}shutdown -h now\" via ssh"
+    ! kvm_is_running
     $skip_step_if_already_done ; set -e
-    "$DATADIR/ssh-to-kvm.sh" sudo shutdown -h now
-) ; prev_cmd_failed
+    "$DATADIR/ssh-shortcut.sh" $maybesudo shutdown -h now || :  # why does this return rc=255??
+) ; $iferr_exit
 
 : ${WAITFORSHUTDOWN:=5 5 2 2 2 5 5 10 10 30 60} # set WAITFORSHUTDOWN to "0" to not wait
 (
@@ -37,4 +37,5 @@ kvm_is_running()
 	echo "Waiting for $waitfor seconds for KVM process $kvmpid to exit"
 	sleep "$waitfor"
     done <<<"$WAITFORSHUTDOWN"
-) ; prev_cmd_failed
+    kvm_is_running || rm $DATADIR/runinfo/kvm.pid
+) ; $iferr_exit

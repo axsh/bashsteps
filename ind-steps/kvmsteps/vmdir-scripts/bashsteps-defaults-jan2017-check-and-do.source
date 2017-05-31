@@ -1,0 +1,305 @@
+
+thiscodepath="${BASH_SOURCE[0]}"  # "$0" will not work, because we want the sourced-in code
+[[ "$thiscodepath" == /* ]] || thiscodepath="$(pwd)/$thiscodepath"
+butilsname="bashsteps-bash-utils-jan2017.source"
+source "$(dirname "$thiscodepath")/$butilsname" || {
+       echo "could not load $butilsname"
+       exit 1
+}
+
+do_set_dash_u_and_workarounds()
+{
+    set -u # Make sure script exits if hook variables are misspelled or not set
+
+    # But now the [ "$avar" = "" ] pattern fails. :-( Here is a workaround:
+    isemptyvar()
+    {
+	# is the var unset or empty?
+	eval '[ "${'${1}'+isset}" == "isset" ]' && \
+	    eval '[ "$'$1'" != ""  ]' &&  return 1  # No, not empty
+	return 0 # yes is empty or unset
+    }
+
+    # And set -u makes ( aaa=() ; echo "${aaa[@]}" ) fail.
+    # So this workaround can be found in the code:
+    #   ( aaa=( setu-workaround ) ; echo "${aaa[@]:0}" ).  Yuck.
+}
+
+setup_post_step_error_vars()
+{
+    # make variable forms for the error functions used after calls to steps
+    export iferr_continue    ; : ${iferr_continue:="iferr_continue"}
+    export iferr_exit        ; : ${iferr_exit:="iferr_exit"}
+    export iferr_killpg      ; : ${iferr_killpg:="iferr_killpg"}
+    
+    # and define prev_cmd_failed for backwards compatability
+    export prev_cmd_failed="iferr_exit"
+    prev_cmd_failed() { iferr_exit ; }
+    export -f prev_cmd_failed
+    export -f iferr_exit
+    export -f iferr_continue
+}
+
+# need to test because "set -u" is in effect
+if [ "${DATADIR+isset}" == "isset" ]; then
+    # The bash man page documents removing the colon from the :+ expansion, so the above should be safe.
+    [ "$DATADIR" == "" ] || iferr_exit '$DATADIR must not be exported to an independent step'
+fi
+
+setup_datadir()
+{
+    # Experimental special case:  If the script is called via a symbolic link,
+    # and datadir.conf is in the same directory, make that directory DATADIR.
+
+    if [ -L "$0" ] && [ -f "$LINKCODEDIR/datadir.conf" ]; then
+	DATADIR="$LINKCODEDIR"
+	params=( setu-workaround "${@}" )
+    else
+	# normal case: the first parameter must be the data directory
+	[ "${1+isset}" == "isset" ] || iferr_exit "First parameter must be the DATADIR"
+	DATADIR="$(absdirectory "$1")" || iferr_exit "Invalid \$DATADIR ($1)"
+	params=( setu-workaround "${@:2}") # all the params except the first
+    fi
+    eval_iferr_exit 'source $DATADIR/datadir.conf'
+}
+
+check_requirements()
+{
+    # check that DATADIR was initialized for the calling script
+    [ "$guestscript" = "true" ] || \
+	[ -L "$DATADIR/$SCRIPTNAME" ] || \
+	iferr_exit "\$DATADIR ($DATADIR) not initialized for script ($SCRIPTNAME).  Append guest to command if OK."
+}
+
+setup_do_framework()
+{
+    # the new framework:
+    : ${starting_step:=default_set_title}
+    : ${starting_group:=default_set_title}
+    : ${skip_step_if_already_done:=default_skip_step}
+    : ${skip_group_if_unnecessary:=default_skip_group}
+    export starting_step
+    export starting_group
+    export skip_step_if_already_done
+    export skip_group_if_unnecessary
+
+    default_set_title()
+    {
+	[ "$*" != "" ] && step_title="$*"
+    }
+    export -f default_set_title
+
+    default_skip_step()
+    {
+	if (($? == 0)); then
+	    echo "** Skipping step: $step_title"
+	    step_title=""
+	    exit 0 # exit the process for the step, but keep going
+	else
+	    echo ; echo "** DOING STEP: $step_title"
+	    step_title=""
+	    isemptyvar BASHSTEPS_DOING_STEP || {
+		# would like to make this a separate verification check,
+		# but it requires actually running the "do" part of the code
+		echo "ERROR: steps in bashsteps should not be nested.  Consider using groups." 1>&2
+	    }
+	    export BASHSTEPS_DOING_STEP=true
+	fi
+    }
+    export -f default_skip_step
+
+    default_skip_group()
+    {
+	if (($? == 0)); then
+	    echo "** Skipping group: $step_title"
+	    step_title=""
+	    exit 0
+	else
+	    echo ; echo "** DOING GROUP: $step_title"
+	    step_title=""
+	fi
+    }
+    export -f default_skip_group
+}
+
+setup_check_framework()
+{
+    skip_step_for_check()
+    {
+	if (($? == 0)); then
+	    echo "** Step: $step_title (done)"
+	else
+	    echo ; echo "** Step: $step_title (NOT DONE)"
+	fi
+	step_title=""
+	exit 0 # exit the process for the step, but keep going
+    }
+    export -f skip_step_for_check
+
+    skip_group_for_check()
+    {
+	echo ; echo "** CHECKING GROUP: $step_title"
+	step_title=""
+    }
+    export -f skip_group_for_check
+
+    : ${skip_step_if_already_done:=skip_step_for_check}
+    : ${skip_group_if_unnecessary:=skip_group_for_check}
+    setup_do_framework
+}
+
+setup_verify_code1()  # check prev_cmd_failed or iferr_exit follow all calls to steps
+{
+    export check_flagname="/tmp/bashsteps-flag-$$"
+    skip_xx_for_verify_code1()
+    {
+	if [ -f "$check_flagname" ]; then
+	    echo "WARNING: missing \$iferr_exit somewhere before" 1>&2
+	    echo " $(source_file_linenumber)" 1>&2
+	fi
+	touch "$check_flagname"
+	exit 0
+    }
+    export -f skip_xx_for_verify_code1
+    : ${skip_step_if_already_done:=skip_xx_for_verify_code1}
+    : ${skip_group_if_unnecessary:=skip_xx_for_verify_code1}
+    export skip_step_if_already_done
+    export skip_group_if_unnecessary
+
+    iferr_for_verify_code1()
+    {
+	rm -f "$check_flagname"
+    }
+    export -f iferr_for_verify_code1
+    : ${iferr_exit:="iferr_for_verify_code1"}
+    
+    just_output_step_label()
+    {
+	echo ; echo "** Step: $1"
+    }
+    export -f just_output_step_label
+    : ${starting_step:=just_output_step_label}
+    export starting_step
+    
+    just_output_group_label()
+    {
+	echo ; echo "** Group: $1"
+    }
+    export -f just_output_group_label
+    : ${starting_group:=just_output_group_label}
+    export starting_group
+
+    verify_code1_cleanup()
+    {
+	if [ -f "$check_flagname" ]; then
+	    echo "WARNING: missing \$iferr_exit for probably the last step." 1>&2
+	    rm -f "$check_flagname"
+	fi
+    }
+    trap "verify_code1_cleanup" EXIT
+}
+
+setcmd()
+{
+    if [ "$thecmd" = "" ]; then
+	thecmd="$1"
+    else
+	just_exit "Multiple commands given ($thecmd and $1)"
+    fi
+}
+
+parse_parameters()
+{
+    thecmd=""
+    guestscript=""
+    for	p in "$@"; do
+	case "$p" in
+	    [d]o | dosteps | check | checksteps)
+		setcmd "$p" ;;
+	    verifycode1) 
+		setcmd "$p" ;;
+	    wrapped) 
+		setcmd "$p" ;;
+	    nosetu)
+		set +u # for wrapper scripts that get confused by set -u
+		;;
+	    guest) # see check_requirements()
+		guestscript="true"
+		;;
+	    *)  just_exit "Unexpected parameter ($p)" ;;
+	esac
+    done
+}
+
+bashctrl-main()
+{
+    do_set_dash_u_and_workarounds
+    setup_datadir "$@" # why is "$@" necessary here?
+    parse_parameters "${params[@]:1}" # :1 to skip over setu-workaround
+    check_requirements
+    case "$thecmd" in
+	[d]o | dosteps)
+	    setup_do_framework
+	    ;;
+	check | checksteps)
+	    setup_check_framework
+	    ;;
+	verifycode1)
+	    setup_verify_code1
+	    ;;
+	wrapped)
+	    : # all hooks have been set up by wrapper scripts
+	    ;;
+	*)
+	    # If all of these are defined, assume a wrapper script has
+	    # already set up the environment, so it should be possible
+	    # to start this script with no command.  If not, output an
+	    # error message giving the commands for specifying how to
+	    # set up the hooks, which would be helpful for users who
+	    # would like to run the script without any wrapper script.
+	    symblist=(
+		prev_cmd_failed
+		starting_step
+		starting_group
+		skip_step_if_already_done
+		skip_group_if_unnecessary
+	    )
+	    for symb in "${symblist[@]}"; do
+		if eval "[ \"\${$symb:=}\" = '' ]"; then
+		    reportfailed "No command chosen. Choose from (do, check, verifycode1)."
+		fi
+	    done
+	    ;;
+    esac
+    setup_post_step_error_vars
+}
+
+bashctrl-main "$@"
+
+initialize_hooks_for_remote_proxy=initialize_hooks_for_remote_proxy_f
+export initialize_hooks_for_remote_proxy
+
+initialize_hooks_for_remote_proxy_f()
+{
+    vlist=(
+	starting_group
+	starting_step
+	skip_step_if_already_done
+	skip_group_if_unnecessary
+	prev_cmd_failed
+	iferr_exit
+	iferr_continue
+    )
+    for v in "${vlist[@]}"; do
+	fname="$(eval echo \$$v)"
+	echo export "$v='$fname'"
+	declare -f "$fname"
+	echo export -f "$fname"
+    done
+    echo "$starting_step" >/tmp/abcd
+}
+export -f initialize_hooks_for_remote_proxy_f
+
+# Note:  The old wrapper script still works.  For example:
+# /media/sda2/dev/work-dev/bashsteps/bashctrl.sh ./simple-test.sh indent path/adatadir nosetu status org-mode >aa.org
+

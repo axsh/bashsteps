@@ -1,0 +1,164 @@
+
+# Generally use just_* after && and iferr_* after ||.
+# For example:  [ -f somefile ] && just_exit "File already exists"
+# For example:  which someprogram 2>/dev/null || iferr_exit "someprogram is not installed"
+#    or:        which someprogram 2>/dev/null ; iferr_exit "someprogram is not installed"
+
+just_exit()
+{
+    echo "Error: ($*)" 1>&2
+    echo "Exiting." 1>&2
+    exit 252
+}
+
+reportfailed() { just_exit "$@" ; }
+
+just_killpg()
+{
+    echo "Error: ($*)" 1>&2
+    echo "Exiting program group." 1>&2
+    kill -TERM 0
+}
+
+iferr_continue()
+{
+    rc="$?"
+    [ "$rc" = "0" ] && return 0
+    [ "$rc" = "252" ] || echo "Command Error: rc=$rc ($*)" 1>&2
+    return 252 # note, not exiting (yet)
+}
+
+iferr_exit()
+{
+    iferr_continue "$@" && return 0
+    [ "$rc" = "252" ] || echo "Exiting." 1>&2
+    exit 252  # special error code prevents repeating error message
+}
+
+iferr_killpg()
+{
+    # This immediately exits related processes, but runs code in set
+    # by any processe's "trap '{code}' TERM".  For bashsteps, this
+    # could be a good technique if background processes are started
+    # and should be killed.  Also, it eliminates any chance of extra
+    # steps being executed due to missing $bashsteps_iferr_exit code.
+    # For most cases, this technique probably adds no significant
+    # benefit.  Just keeping it here in case it is needed.
+    [ -n "$KILLPGOK" ] || iferr_exit "KILLPGOK not set, read comments in bashsteps-bash-utils.source"
+    iferr_continue "$@" && return 0
+    echo "Exiting program group." 1>&2
+    kill -TERM 0
+}
+# the above are the default values for $bashsteps_iferr_*
+
+eval_iferr_continue()
+{
+    cmdstring="$*"
+    shift
+    # Beware, all the parameters are evaled, so word spliting, parameter expansion, etc will happen
+    eval "$cmdstring"
+    local rc="$?"
+    [ "$rc" = "0" ] && return 0
+    [ "$rc" = "252" ] || echo "Command Error: rc=$rc ($cmdstring)" 1>&2
+    return 252 # note, not exiting (yet)
+}
+
+eval_iferr_exit()
+{
+    eval_iferr_continue "$@" && return 0
+    echo "Exiting." 1>&2
+    exit 252  # special error code prevents repeating error message
+}
+
+eval_iferr_killpg()
+{
+    [ -n "$KILLPGOK" ] || iferr_exit "KILLPGOK not set, read comments in bashsteps-bash-utils.source"
+    # See comments in iferr_killpg()
+    eval_iferr_continue "$@" && return 0
+    echo "Exiting program group." 1>&2
+    kill -TERM 0
+}
+eval_iferr_exit
+
+setup_killpg()
+{
+   # don't run unless $KILLPGOK is set or this script is the process leader
+    [ -n "$KILLPGOK" ] ||  kill -0 -$$ || {
+	    echo "((Read the first part of this script to understand its error handling))" 1>&2
+	    exit 252
+	}
+    export KILLPGOK=yes
+}
+
+absdirectory()
+{
+    local abspath
+    abspath="$(cd "$1" && pwd -P)" ; iferr_exit "in absdirectory(), ($1) is probably not a valid directory"
+    echo "$abspath"
+}
+
+# The code below computes $ORGCODEDIR and $LINKCODEDIR, which are both
+# absolute paths to the directory that contains the main script.  The
+# paths are absolute so that the paths will still be valid if the
+# current working directory is changed.
+
+# $ORGCODEDIR will be the directory of the calling script, which is
+# useful for accessing other scripts and files bundled with the source
+# code.  It is a normalized (physical) path with all symbolic links
+# removed, so relative operations on it will be easy to understand.
+
+# $LINKCODEDIR will also be the directory of the calling script, but
+# keeps all the symbolic links and relative components in the path
+# used to invoke the script.  If the final component is a symbolic
+# link, then it is simply removed without expanding it to whatever
+# path is links to.  $LINKCODEDIR is is useful for a
+# somewhat-object-oriented style of scripting that treats directories
+# as objects with links to script that (kind of) serve as methods.  It
+# is a bit tricky to use it because ../ can take different meanings if
+# it follows a symbolic link, for example by the "cd" command in bash.
+# Following relative paths with symbolic links can be useful, but be
+# careful.
+
+without_symboliclink()
+{
+    # goal here is just to remove the final symbolic link if any.
+    # "readlink -f" also removes links inside the path, which is
+    # OK too, but not necessary
+    echo "$(readlink -f "$1")"
+}
+
+# According to the Bash docs, $0 is definitely unchanged if this
+# script is sourced without parameters.  Therefore, it should contain
+# the path used to invoke main script (which is sourcing this script).
+# The path might be releative to $(pwd) and it might contain symbolic
+# links anywhere in the path.
+
+export SCRIPTNAME
+SCRIPTNAME="${0##*/}"
+
+# ORGCODEDIR is an absolute path the orignal source code file
+export ORGCODEDIR
+ORGCODEDIR="$(absdirectory "$(dirname "$(without_symboliclink "$0")")")" || iferr_exit ORGCODEDIR
+
+# LINKCODEDIR is an absolute path to the directory to the source code
+# reference, whether or not this reference is a symbolic link.  All
+# symbolic links inside the code are preserved so the calling code can
+# decided how to resolve relative references that have "../".
+
+export LINKCODEDIR
+if [[ "$0" == /* ]]; then
+    LINKCODEDIR="${0#./}" || iferr_exit
+else
+    LINKCODEDIR="$(pwd)/${0#./}" || iferr_exit
+fi
+LINKCODEDIR="${LINKCODEDIR%/*}"
+export CODEDIR="$LINKCODEDIR" # backwards compatibility
+
+# something to report line numbers
+source_file_linenumber()
+{
+    : ${index:=2}
+    apath="${BASH_SOURCE[index]}"
+    nolinks="$(readlink -f "$apath")" # necessary because github does not follow symbolic links
+    echo "$nolinks::${BASH_LINENO[1]}"
+}

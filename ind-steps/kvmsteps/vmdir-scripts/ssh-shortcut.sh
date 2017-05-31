@@ -32,4 +32,10 @@ keyparams="-i $sshkeyfile"
 
 : ${SSHUSER:?} ${SSHPORT:?}
 
-ssh "$SSHUSER"@127.0.0.1 -p "$SSHPORT" $keyparams "$@"
+extraoptions=(
+    -o StrictHostKeyChecking=no
+    -o UserKnownHostsFile=/dev/null
+    -o GSSAPIAuthentication=no
+    )
+
+ssh "${extraoptions[@]}" "$SSHUSER"@127.0.0.1 -p "$SSHPORT" $keyparams "$@"
