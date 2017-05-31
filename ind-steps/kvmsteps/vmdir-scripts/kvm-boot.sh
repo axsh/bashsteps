@@ -57,7 +57,7 @@ calculate_ports
     source "$DATADIR/datadir.conf"
 
     # TODO: decide if it is worth generalizing kvmsteps to deal with cases like this:
-    : ${mcastPORT:="1234"}  ${mcastMAC:="52:54:00:12:00:00"}
+    : ${mcastPORT:="none"}  ${mcastMAC:="52:54:00:12:00:00"}
     : ${mcastnet="-net nic,vlan=1,macaddr=$mcastMAC  -net socket,vlan=1,mcast=239.255.10.10:$mcastPORT"}
 
     # If mcastnet is set to "", the above line will leave it that way , so
