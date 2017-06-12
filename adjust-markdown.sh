@@ -64,4 +64,24 @@ if [ "$deeperpart" != "$newdir" ] && [ "$slashes" != "" ]; then # new dir is dee
     fi
 fi
 
-just_exit "Destination path is not deeper than original markdown file"
+# For completeness, make the conversion work in the opposite direction:
+
+deeperpart="${orgdir#$newdir}"
+slashes="${deeperpart//[^\/]}"
+
+if [ "$deeperpart" != "$orgdir" ] && [ "$slashes" != "" ]; then # new dir is *less* deep
+    frompat='/';  topat='/..'
+    toadd="${slashes//$frompat/$topat}"  # Remove an extra "/.." for each level deeper
+    # so if slashes="//", toadd will now be "/../.."
+
+    exec 9> "$newpath" || just_exit "Cannot open output file ($newpath)"
+    if cat "$orgpath" | sed -e "s,$toadd/blob/,/blob/,g" -e "s,$toadd/tree/,/tree/,g" >&9; then
+	echo "New file successfully written at $newpath"
+	exit 0
+    else
+	rm "$newpath"
+	just_exit "Error while processing with with sed"
+    fi
+fi
+
+just_exit "Source and destination markdown files are at the same level"
