@@ -531,6 +531,8 @@ mdlink_convert() # almost exact copy of orglink_convert()
 	    [ "$emptya$emptyb$emptyc$emptyd$emptye" != "" ] && echo "bug"
 	    IFS=':' read mid rest <<<"$saveline"
 	    IFS=' ' read index rest2 <<<"$rest"
+	    frompat='//' ; topat='/ /'
+	    rest2="${rest2//$frompat/$topat}" # make sure urls in headings don't mess up markdown
 	    htmllink_part="<a href=\"$rel_md_link/$filepath#L$n1\">$index $rest2</a>"
 	    markdown_output="<code>$savepref $mid${htmllink_part}</code><br>"
 	    # use non-breaking spaces so indentation will look OK
