@@ -39,7 +39,7 @@ mfff()
     $starting_group "group 2"
     mfff
     (
-	$starting_step "Make t-eee"
+	$starting_step "Make t-eee (meaningless link: http://github.com )"
 	cd "$DATADIR"
 	[ -f t-eee ]
 	$skip_step_if_already_done; set -e
