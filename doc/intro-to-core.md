@@ -7,7 +7,7 @@ done or not.
 
 For some types of scripts (for example very short ones, or
 non-destructive, fast executing scripts), it is not worth the effort.
-The problem is that often it is not until later that the benefit are
+The problem is that often it is not until later that the benefits are
 understood for a particular script.  And then the programmer ends up
 wishing that the enhancements had been included in the script from the
 beginning.
@@ -19,15 +19,14 @@ For example, consider this 4 line script (pseudo code):
     make
     make install
 
-There are many ways to do add the two enhancements to this code.  This
+There are many ways to add the two enhancements to this code.  This
 could be done directly with well-placed conditional statements, but
 such an over-simplified solution would limit the benefits.  A better
 solution might be to use a special framework that can maximize the
 benefits of the enhancements (e.g.  dependency analysis, logging,
-progress updates, debugging tools, etc.) Unfortunately, using such a
-framework requires more upfront effort to understand the
-framework(s), choose the framework, install the frameworks, and adapt
-the script to the framework.  With either solution, there are real
+progress updates, debugging tools, etc.).  Unfortunately, using such a
+framework requires more upfront effort to understand, choose, install, and adapt
+the script to the framework(s).  With either solution, there are real
 risks that discourage adding the enhancements in the first place.
 
 The goal of bashsteps is to address these risks.  It is designed to be
@@ -66,7 +65,7 @@ direct.  The key design choice here is that the code can appear in the
 same order as the unenhanced script, as opposed to being split out
 into separate functions or separate files. Another related point is
 that this design makes it easy to later split steps into multiple
-steps, and vise versa.
+steps, or to recombine multiple steps into fewer steps.
 
 Now that we have created a couple steps, the lines that can test
 whether the step has been done can be inserted:
@@ -88,7 +87,7 @@ whether the step has been done can be inserted:
 
 Now the script has been enhanced by both splitting it into steps and
 by including code that can test whether the step has been done.  With
-The above minimal framework, however, the functionality of the script
+the above minimal framework, however, the functionality of the script
 is still unchanged. 
 
 To start getting benefits, here is a still-quite-simple framework
