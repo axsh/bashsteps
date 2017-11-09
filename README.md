@@ -15,48 +15,6 @@ with bashsteps.  Starting out this way is also a good way to emphasize
 that there are only a few requriements, which is actually a key
 benefit itself.
 
-### (simplifying) Script Assumptions
-
-Having so few requirements is a huge bonus, but it comes with
-trade-offs.  Probably the most important trade-off is that bashsteps is
-only appropriate for certain types of scripts.  It is difficult to
-characterize exactly what makes a script appropriate for bashsteps,
-because programming is a creative activity.  A script that at first
-does not seem appropriate can easily become so with some creative
-insight about how and where the script will be used.
-
-Nevertheless, it is still useful to try to characterize the types of
-scripts that are appropriate.  Since the purpose of this page is to
-give a complete explanation of the *simplest core part* of bashsteps,
-a good place to start a rather restrictive characterization of scripts
-that map well to the core:
-
-A)  The script can be divided in a fixed number of non-overlapping
-    steps.
-
-B)  The steps can be executed in a fixed, pre-decided order.
-
-C)  The only state that is shared between steps is external to the
-    script.  In other words, script variables created by one step are not
-    used by another step.
-
-D)  The changes made by the script are additive.  For example, a script
-    that installs a package never uninstalls it.
-
-Although restrictive, if one can safely assume these four
-characteristics for a planned script, then it is highly likely to be
-an appropriate script for bashsteps and that it is possible to be
-successful *using only information in this page*.  Common examples of
-such scripts would be those that install software or do document
-conversion.
-
-See other pages to explore few more hooks and programming requirements
-that make bashsteps appropriate for a wider range of scripts.
-Remember that bashsteps can be (and has been) used for scripts that do
-not meet these criteria.  Other pages also offer less restrictive
-criteria to help in judging whether bashsteps would bring benefits for
-whatever use is under consideration.
-
 ### software requirements
 
 The first requirement is that 3 "bashsteps hook" variables be defined.
@@ -126,6 +84,48 @@ followed by a descriptive string that summarizes the step.  If used,
 this command must be before "$skip_step_if_already_done".
 
 That's all!
+
+### (simplifying) Script Assumptions
+
+Having so few requirements is a huge bonus, but it comes with
+trade-offs.  Probably the most important trade-off is that bashsteps is
+only appropriate for certain types of scripts.  It is difficult to
+characterize exactly what makes a script appropriate for bashsteps,
+because programming is a creative activity.  A script that at first
+does not seem appropriate can easily become so with some creative
+insight about how and where the script will be used.
+
+Nevertheless, it is still useful to try to characterize the types of
+scripts that are appropriate.  Since the purpose of this page is to
+give a complete explanation of the *simplest core part* of bashsteps,
+a good place to start a rather restrictive characterization of scripts
+that map well to the core:
+
+A)  The script can be divided in a fixed number of non-overlapping
+    steps.
+
+B)  The steps can be executed in a fixed, pre-decided order.
+
+C)  The only state that is shared between steps is external to the
+    script.  In other words, script variables created by one step are not
+    used by another step.
+
+D)  The changes made by the script are additive.  For example, a script
+    that installs a package never uninstalls it.
+
+Although restrictive, if one can safely assume these four
+characteristics for a planned script, then it is highly likely to be
+an appropriate script for bashsteps and that it is possible to be
+successful *using only information in this page*.  Common examples of
+such scripts would be those that install software or do document
+conversion.
+
+See other pages to explore few more hooks and programming requirements
+that make bashsteps appropriate for a wider range of scripts.
+Remember that bashsteps can be (and has been) used for scripts that do
+not meet these criteria.  Other pages also offer less restrictive
+criteria to help in judging whether bashsteps would bring benefits for
+whatever use is under consideration.
 
 ### example
 
