@@ -86,7 +86,7 @@ usually not be active in "check" code.)
 successful, it should exit with a non-zero exit code.  If successful,
 it must exit the process with a zero return code.
 
-(6) A bash command with only "$skip_if_already_done" must be executed between
+(6) A bash command with only "$skip_step_if_already_done" must be executed between
 the "check" and the "do" part.
 
 (7) A step must never start another step.  In other words, steps must
@@ -122,7 +122,7 @@ compile_dir="/tmp/somedir"
 (
   [ -d "$compile_dir/server" ]
 
-  $skip_if_already_done; set -e
+  $skip_step_if_already_done; set -e
   cd "$compile_dir"
   git clone http://github.com/servers-r-us/server
 ) ; $prev_cmd_failed
@@ -130,7 +130,7 @@ compile_dir="/tmp/somedir"
 (
   [ -f "$compile_dir/server/Makefile" ]
 
-  $skip_if_already_done; set -e
+  $skip_step_if_already_done; set -e
   cd "$compile_dir/server"
   ./configure
 ) ; $prev_cmd_failed
@@ -138,7 +138,7 @@ compile_dir="/tmp/somedir"
 (
   [ -f "$compile_dir/server/server.bin" ]
 
-  $skip_if_already_done; set -e
+  $skip_step_if_already_done; set -e
   cd "$compile_dir/server"
   make
 ) ; $prev_cmd_failed
@@ -153,7 +153,7 @@ following is executed?
 skip_step_if_already_done='eval exit 0 #'  ./simple-example.sh
 
 Because of coding requirement #10, lines in the script that contain
-"$skip_if_already_done" make each step's process exit early *such that
+"$skip_step_if_already_done" make each step's process exit early *such that
 no code from "do" parts is executed.* Therefore only the "check" parts and
 parts outside of steps will be executed.  Because of coding
 requirements #4 and #9, *no state external to the script is changed.*
