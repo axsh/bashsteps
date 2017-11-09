@@ -1,10 +1,11 @@
 
 ### Introduction
 
-Bashsteps helps make bash scripts safer by allowing more graceful
-recovery from external failures. It does this by motivating and
-facilitating efforts to (1) structure the script into
-meaningful steps and (2) write check code for *all* steps.
+Bashsteps is a set of hooks and bash coding requirements that help
+make bash scripts safer by allowing more graceful recovery from
+external failures. It does this by motivating and facilitating efforts
+to (1) structure the script into meaningful steps and (2) write check
+code for *all* steps.
 
 There is more to say about this and other benefits, but probably a
 better way to introduce bashsteps is first to explain the requirements
