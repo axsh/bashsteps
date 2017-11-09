@@ -38,17 +38,15 @@ Bashsteps for a wider range of scripts.)
 ### software requirements
 
 The first requirement is that 5 "bashsteps hook" variables be defined.
-One way to define them that is minimal but still useful is to paste the
-following code at the start of the script.  These particulary settings
-for the hooks makes the script skip any step that has already been
-done.
+One way to define them that is minimal but still useful is to copy and
+paste the following code to the start of the script.  These
+particulary settings for the hooks makes the script skip any step that
+has already been done.
 
 ```
 : ${prev_cmd_failed:='eval [ $? == 0 ] || exit #'}
 : ${starting_step:=':'}
 : ${skip_step_if_already_done:='eval [ $? == 0 ] && exit #'}
-: ${starting_group:=':'}
-: ${skip_group_if_already_done:=':'}
 ```
 
 That is it!  Other options for defining the hooks exist, which are
@@ -104,6 +102,10 @@ Never, just like the code in the "check" part.
 
 (10) A script should not change the value of a bashsteps hook variable
 that has already been set.
+
+(11) (optional) A step can start with a bash command with "$starting_step"
+followed by a descriptive string that summarizes the step.  If used,
+this command must be before "$skip_step_if_already_done".
 
 That's all!
 
