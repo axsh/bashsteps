@@ -59,7 +59,7 @@ whatever use is under consideration.
 
 ### software requirements
 
-The first requirement is that 5 "bashsteps hook" variables be defined.
+The first requirement is that 3 "bashsteps hook" variables be defined.
 One way to define them that is minimal but still useful is to copy and
 paste the following code to the start of the script.  These
 particularly settings for the hooks makes the script skip any step that
@@ -74,10 +74,6 @@ has already been done.
 That is it!  Other options for defining the hooks exist, which are
 described elsewhere, but it is worth emphasizing that no other
 software, libraries, or "plugins" are *required*.
-
-All standard Bashsteps scripts should run fine with only the above 5
-lines of software.  Such minimal software requirements helps make
-bashsteps future-proof.
 
 ### coding requirments/coding convensions:
 
