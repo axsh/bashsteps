@@ -10,32 +10,34 @@ code for *all* steps.
 There is more to say about this and other benefits, but probably a
 better way to introduce bashsteps is first to explain the requirements
 for using it.  Some of the requirements involve discipline from the
-user, so knowledge about the requirements is necessary to be sucessful
+user, so knowledge about the requirements is necessary to be successful
 with bashsteps.  Starting out this way is also a good way to emphasize
-that there are only a few requriements, which is actually a key
+that there are very few requirements, which is actually a key
 benefit itself.
 
-### software requirements
+### Bashsteps Hooks
 
-The first requirement is that 3 "bashsteps hook" variables be defined.
-One way to define them that is minimal but still useful is to copy and
-paste the following code to the start of the script.  These
-particularly settings for the hooks makes the script skip any step that
-has already been done.
+The only software requirement is that three "bashsteps hook" variables be
+defined.  ()  One way to define them that is minimal but
+still useful is to copy and paste the following code to the start of
+the script.  These particularly settings for the hooks makes the
+script skip any step that has already been done.
 
 ```
 : ${prev_cmd_failed:='eval [ $? == 0 ] || exit #'}
 : ${starting_step:=':'}
 : ${skip_step_if_already_done:='eval [ $? == 0 ] && exit #'}
+export prev_cmd_failed starting_step skip_step_if_already_done
 ```
 
-That is it!  Other options for defining the hooks exist, which are
-described elsewhere, but it is worth emphasizing that no other
-software, libraries, or "plugins" are *required*.
+That's all that's necessary!  Other options for defining the hooks
+exist, which are described elsewhere, but it is worth emphasizing that
+no other software, libraries, or "plugins" are *required*. (Bashsteps
+has five hook variables, but only three are needed for this page.)
 
-### coding requirments/coding convensions:
+### Bashsteps Coding Conventions
 
-The coding requirements do require some discipline from the script
+The coding conventions do require some discipline from the script
 writer.  Fortunately, there are only a few rules that have to be
 followed.
 
@@ -67,7 +69,7 @@ the "check" and the "do" part.
 never be nested.
 
 (8) The code that invokes a step must follow the invocation with the
-command "$prev_cmd_failed".  In addtion to making
+command "$prev_cmd_failed".  In addition to making
 bashsteps work (for reasons explained elsewhere), perhaps this
 requirement also can serve as a nice reminder that working around
 bash's flaws is sometimes necessary, yet easily done in stable,
@@ -87,7 +89,7 @@ That's all!
 
 ### (simplifying) Script Assumptions
 
-Having so few requirements is a huge bonus, but it comes with
+Having so few requirements is a huge bonus, but this bonus comes with
 trade-offs.  Probably the most important trade-off is that bashsteps is
 only appropriate for certain types of scripts.  It is difficult to
 characterize exactly what makes a script appropriate for bashsteps,
@@ -135,8 +137,7 @@ Here is an example script with three steps that meets the requirements:
 : ${prev_cmd_failed:='eval [ $? == 0 ] || exit #'}
 : ${starting_step:=':'}
 : ${skip_step_if_already_done:='eval [ $? == 0 ] && exit #'}
-: ${starting_group:=':'}
-: ${skip_group_if_already_done:=':'}
+export prev_cmd_failed starting_step skip_step_if_already_done
 
 compile_dir="/tmp/somedir"
 (
@@ -179,7 +180,7 @@ parts outside of steps will be executed.  Because of coding
 requirements #4 and #9, *no state external to the script is changed.*
 
 This is the key mechanism that allows wrapper scripts to customize
-script behaviour.  If a wrapper script can assume that (1) running the
+script behavior.  If a wrapper script can assume that (1) running the
 script will touch every step and that (2) it can safely avoid changing
 state, then many on-the-fly beneficial script enhancements become
 possible by setting the hooks appropriately.
@@ -192,7 +193,7 @@ catch cases where the coding requirements have not been followed.  The
 payoff for your careful coding is a flexible framework with minimal
 software requirements.
 
-All the requirements discussed above are part the bashstep's current
+All the requirements discussed above are part the bashsteps' current
 core design.  For scripts that meet the above 4 assumptions, this page
 supplies everything necessary to achieve an important benefit: that when
 a script fails halfway through, re-execution of the script can
@@ -201,8 +202,8 @@ have already been done.  Potentially dangerous side effects from
 repeating already done steps are avoided.
 
 The above requirements are not expected to change.  Script that meet
-these requirements should work with future bashstep tools.  Tools that
-build on top of just these requriments can expect to work with scripts
+these requirements should work with future bashsteps tools.  Tools that
+build on top of just these requirements can expect to work with scripts
 written in the future.
 
 ### Next steps
@@ -216,16 +217,16 @@ There are several directions to go from here in introducing bashsteps.
 
 2) All of the above may seem arbitrary.  The following pages are
    written more from a motivation perspective and give hints about the
-   design tradeoffs and the roadmap.  Some of the known frustrations
+   design trade-offs and the road map.  Some of the known frustrations
    of using bashsteps are discussed.
 
 3) Once the user has put in the effort of splitting the script into
    steps and has coded a check for each step, various automated tools
-   become possible.  These pages describe default initilization and
+   become possible.  These pages describe default initialization and
    wrapper scripts that reward the user with more benefits by building
    on bashsteps' stable core.
 
-4) Even though minimal requirements is bashstep's key advantage, there
+4) Even though minimal requirements is bashsteps' key advantage, there
    are probably additional requirements that would have good payoff.
    The following pages describe such requirements and introduce
    work-in-progress scripts make it possible to start exploring
